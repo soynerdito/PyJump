@@ -1,7 +1,7 @@
 ## **PyJump**
 Simple game written in pygame. 
 
-# Credits #
+#### Credits
 + Based on code from a post in stackoverflow. 
 + Images from http://opengameart.org/
 + Sprite handling from http://pygame.org/wiki/Spritesheet?parent=
@@ -9,13 +9,18 @@ Simple game written in pygame.
 Video of gameplay
 https://www.youtube.com/watch?v=-Ct8cjqQtNw&feature=youtu.be
 
-#  To Run
+#### To Run
 python main.py
 
-# Dependecies
+#### Controls
++ Use arrows
++ Up arrow jump
++ Right/Left arrow move
+
+#### Dependecies
 pygame
 
-# Screenshot
+#### Screenshot
 
 ![alt tag](https://raw.githubusercontent.com/soynerdito/PyJump/master/documentation/screen_capture.png)
 
