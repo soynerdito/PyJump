@@ -31,7 +31,7 @@ def get_floor(floor_number):
     else:
         random.seed(floor_number)
         base = [" ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ",
-                " ", " ", "1", "1", " ", " ", "1", " ", " ", "1", " ", " ", "1", "1", " ", " ", " ", " ", " ", " ", "1"]
+                " ", " ", "1", "2", " ", "4 ", "1", " ", " ", "1", " ", " ", "1", "2", " ", " ", " ", " ", " ", " ", "1"]
         floor_array = random.sample(base, len(base))
         floor = "1"
         for item in floor_array:
@@ -64,6 +64,8 @@ def main():
     global player_jump
     global platform_image
     global platform_image_alt
+    global loose_platform_image
+    global platform_trampoline
 
     game_sprite_sheet = SpriteSheet('simples_pimples.png')
     player_base_x = 832
@@ -76,6 +78,9 @@ def main():
     player_image = player_walk_2
     platform_image_alt = load_image(game_sprite_sheet, 320, 928 )
     platform_image = load_image(game_sprite_sheet, 352, 928 )
+    loose_platform_image = load_image(game_sprite_sheet, 448,960 )
+    platform_trampoline = load_image(game_sprite_sheet, 1, 640 )
+
 
     up = down = left = right = running = False
     bg = Surface((32, 32))
@@ -84,7 +89,7 @@ def main():
     entities = pygame.sprite.Group()
     player = Player(32, (32 * 15))
     platforms = []
-
+    loose_platforms = []
     x = y = 0
     entity_rows = []
 
@@ -99,6 +104,20 @@ def main():
         for col in floor:
             if col == "1":
                 p = Platform(x, y, row)
+                platforms.append(p)
+                entities.add(p)
+            if col == "2":
+                p = LooseBlock(x, y, row)
+                platforms.append(p)
+                loose_platforms.append(p)
+                entities.add(p)
+            if col == "3":
+                p = FloatingBlock(x, y, row)
+                platforms.append(p)
+                loose_platforms.append(p)
+                entities.add(p)
+            if col == "4":
+                p = PlatformTrampoline(x, y, row)
                 platforms.append(p)
                 entities.add(p)
             if col == "E":
@@ -190,7 +209,20 @@ def main():
                         p = Platform(x, y, (int(row)))
                         platforms.append(p)
                         entities.add(p)
-
+                    if col == "2":
+                        p = LooseBlock(x, y, row)
+                        platforms.append(p)
+                        loose_platforms.append(p)
+                        entities.add(p)
+                    if col == "3":
+                        p = FloatingBlock(x, y, row)
+                        platforms.append(p)
+                        loose_platforms.append(p)
+                        entities.add(p)
+                    if col == "4":
+                        p = PlatformTrampoline(x, y, row)
+                        platforms.append(p)
+                        entities.add(p)
                     if col == "E":
                         e = ExitBlock(x, y, int(row))
                         platforms.append(e)
@@ -201,6 +233,10 @@ def main():
 
         # update player, draw everything else
         player.update(up, down, left, right, running, platforms)
+        #update loose platforms
+        for lp in loose_platforms:
+            lp.update( platforms)
+
         minRow = int(camera.state.top / 32)
 
         LAST_MIN = minRow
@@ -214,6 +250,10 @@ def main():
                     #    print("Eat row " + str(e.row) + " " + str(minRow))
                     entities.remove(e)
                     platforms.remove(e)
+                    try:
+                        loose_platforms.remove(e)
+                    except:
+                        pass
                     draw_this = False
             except AttributeError:
                 draw_this = True
@@ -355,14 +395,25 @@ class Player(Entity):
                 if y_vel > 0:
                     self.rect.bottom = p.rect.top
                     self.onGround = True
-                    if p.image == platform_image_alt:
-                        self.y_vel = -2
-                    else:
-                        self.y_vel = 0
+                    try:
+                        p.step_over()
+                    except:
+                        pass
+                    #if p.image == platform_image_alt:
+                    self.y_vel = p.is_rubber()
+                    #if p.is_rubber() != 0:
+                    #    self.y_vel = -2
+                    #else:
+                    #    self.y_vel = 0
                 if y_vel < 0:
-                    p.image = platform_image_alt
+                    try:
+                        p.bellow_touch()
+                    except:
+                        pass
+                    #p.image = platform_image_alt
                     self.rect.top = p.rect.bottom
                     self.y_vel = 0
+
 
 
 class Window():
@@ -376,6 +427,11 @@ class BaseEntity(Entity):
         Entity.__init__(self)
         self.row = int(row)
 
+    def is_rubber(self):
+        return 0
+
+
+
 
 class Platform(BaseEntity):
     def __init__(self, x, y, map_row):
@@ -387,9 +443,86 @@ class Platform(BaseEntity):
         # self.image.fill(Color("#DDDDDD"))
         self.rect = Rect(x, y, 32, 32)
 
+    def bellow_touch(self):
+        self.image = platform_image_alt
+
+    def step_over(self):
+        pass
+
+    def is_rubber(self):
+        if self.image == platform_image_alt:
+            return -2
+        else:
+            return 0
+
     def update(self):
         pass
 
+class PlatformTrampoline(Platform):
+    def __init__(self, x, y, map_row):
+        Platform.__init__(self, x, y, map_row)
+        self.image = platform_trampoline
+
+    def is_rubber(self):
+        return -10
+
+    def bellow_touch(self):
+        pass
+
+class LooseBlock(BaseEntity):
+    def __init__(self, x, y, map_row):
+        BaseEntity.__init__(self, map_row)
+        self.x_vel = 0
+        self.y_vel = 0
+        self.onGround = True
+        self.image = loose_platform_image
+        self.image.convert()
+        self.rect = Rect(x, y, 32, 32)
+
+    def refresh_image(self):
+        pass
+
+    def step_over(self):
+        self.y_vel = 1
+
+    def update(self, platforms):
+        if self.y_vel ==0:
+            return
+        if not self.onGround:
+            # only accelerate with gravity if in the air
+            self.y_vel += 0.3
+            # max falling speed
+            if self.y_vel > 50: self.y_vel = 50
+
+        # increment in y direction
+        self.rect.top += self.y_vel
+        # assuming we're in the air
+        #self.onGround = False
+        # do y-axis collisions
+        self.collide(0, self.y_vel, platforms)
+        self.refresh_image()
+
+    def collide(self, x_vel, y_vel, platforms):
+        global platform_image_alt
+        for p in platforms:
+            #only check collition with other platforms
+            if p != self and pygame.sprite.collide_rect(self, p):
+                if y_vel > 0:
+                    self.rect.bottom = p.rect.top
+                    self.onGround = True
+                    self.y_vel = 0
+                if y_vel < 0:
+                    p.image = platform_image
+                    self.rect.top = p.rect.bottom
+                    self.y_vel = 0
+
+
+class FloatingBlock(LooseBlock):
+    def __init__(self, x, y, map_row):
+        LooseBlock.__init__(self, x, y ,map_row)
+
+    def step_over(self):
+        self.y_vel = -1
 
 class ExitBlock(Platform):
     def __init__(self, x, y, map_row):
