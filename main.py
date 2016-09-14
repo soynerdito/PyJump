@@ -44,6 +44,8 @@ def get_floor(floor_number):
 def calc_window(camera_top):
     return Window(int((camera_top / 32) + 20), int((camera_top / 32)))
 
+def load_image( game_sprite_sheet, top_x, top_y ):
+    return game_sprite_sheet.image_at((top_x, top_y, 32, 32), colorkey=(90, 82, 104))
 
 def main():
     global cameraX, cameraY
@@ -54,8 +56,7 @@ def main():
     pygame.display.set_caption("Use arrows to move!")
     timer = pygame.time.Clock()
 
-    # Load spritesheet
-    global gameSpriteSheet
+    # Load sprite sheet
     global game_images
     global player_image
     global player_walk_1
@@ -64,18 +65,17 @@ def main():
     global platform_image
     global platform_image_alt
 
-    gameSpriteSheet = SpriteSheet('simples_pimples.png')
-    # player_image = gameSpriteSheet.image_at((832, 32, 32, 32) , colorkey=(90, 82, 104))
-    # platform_image = gameSpriteSheet.image_at((352, 928, 32, 32) , colorkey=(90, 82, 104))
-    # Load two images into an array, their transparent bit is (255, 255, 255)
+    game_sprite_sheet = SpriteSheet('simples_pimples.png')
     player_base_x = 832
+
     # Load sprites
-    player_jump = gameSpriteSheet.image_at((player_base_x, 32, 32, 32), colorkey=(90, 82, 104))
-    player_walk_1 = gameSpriteSheet.image_at(((player_base_x + 32 * 1), 32, 32, 32), colorkey=(90, 82, 104))
-    player_walk_2 = gameSpriteSheet.image_at(((player_base_x + 32 * 2), 32, 32, 32), colorkey=(90, 82, 104))
+    player_jump = load_image(game_sprite_sheet, player_base_x, 32 )
+
+    player_walk_1 = load_image(game_sprite_sheet, player_base_x + 32 * 1, 32 )
+    player_walk_2 = load_image(game_sprite_sheet, player_base_x + 32 * 2, 32 )
     player_image = player_walk_2
-    platform_image_alt = gameSpriteSheet.image_at((320, 928, 32, 32), colorkey=(90, 82, 104))
-    platform_image = gameSpriteSheet.image_at((352, 928, 32, 32), colorkey=(90, 82, 104))
+    platform_image_alt = load_image(game_sprite_sheet, 320, 928 )
+    platform_image = load_image(game_sprite_sheet, 352, 928 )
 
     up = down = left = right = running = False
     bg = Surface((32, 32))
