@@ -59,24 +59,24 @@ class spritesheet(object):
         return self.images_at(tups, colorkey)
 
 
-def getFloor(floorNumber):
-    if (floorNumber == 1):
+def get_floor(floor_number):
+    if (floor_number == 1):
         floor = "11111111111111111111111111111111111111111111"
     else:
-        random.seed(floorNumber)
+        random.seed(floor_number)
         base = [" ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ",
                 " ", " ", "1", "1", " ", " ", "1", " ", " ", "1", " ", " ", "1", "1", " ", " ", " ", " ", " ", " ", "1"]
-        floorArray = random.sample(base, len(base))
+        floor_array = random.sample(base, len(base))
         floor = "1"
-        for item in floorArray:
+        for item in floor_array:
             floor += str(item)
         floor += "1"
 
     return floor
 
 
-def calcWindow(cameraTop):
-    return Window(int((cameraTop / 32) + 20), int((cameraTop / 32)))
+def calc_window(camera_top):
+    return Window(int((camera_top / 32) + 20), int((camera_top / 32)))
 
 
 def main():
@@ -103,7 +103,7 @@ def main():
     # platform_image = gameSpriteSheet.image_at((352, 928, 32, 32) , colorkey=(90, 82, 104))
     # Load two images into an array, their transparent bit is (255, 255, 255)
     player_base_x = 832
-    #Load sprites
+    # Load sprites
     player_jump = gameSpriteSheet.image_at((player_base_x, 32, 32, 32), colorkey=(90, 82, 104))
     player_walk_1 = gameSpriteSheet.image_at(((player_base_x + 32 * 1), 32, 32, 32), colorkey=(90, 82, 104))
     player_walk_2 = gameSpriteSheet.image_at(((player_base_x + 32 * 2), 32, 32, 32), colorkey=(90, 82, 104))
@@ -120,19 +120,16 @@ def main():
     platforms = []
 
     x = y = 0
-    entitieRows = []
+    entity_rows = []
 
-
-
-
-    # build the level
+    # Build the level
     # y = 0
     for map in range(0, 20):
         row = 20 - map
 
-        floor = getFloor(row)
+        floor = get_floor(row)
         # print(floor)
-        entitieRows.append(int(row))
+        entity_rows.append(int(row))
         for col in floor:
             if col == "1":
                 p = Platform(x, y, row)
@@ -146,8 +143,8 @@ def main():
         y += 32
         x = 0
 
-    myLevel = getFloor(1)
-    total_level_width = len(myLevel) * 32
+    my_level = get_floor(1)
+    total_level_width = len(my_level) * 32
     # total_level_width  = len(level[0])*32
     # total_level_height = len(level)*32
     total_level_height = 20 * 32
@@ -157,7 +154,7 @@ def main():
     LAST_MIN = 0
     lastItem = 0
 
-    lastWindow = Window(0, 0)
+    last_window = Window(0, 0)
     myfont = pygame.font.SysFont("monospace", 15)
     WINY = 0
     while 1:
@@ -215,35 +212,35 @@ def main():
         topRow = (camera.state.top / 32) + 20
         # if int(camera.state.top) != int(WINY):
         # View window changed
-        reportedRow = []
-        windowsChanged = False
-        if int(topRow) != lastWindow.topRow:
-            windowsChanged = True
-            newWindow = calcWindow(camera.state.top)
-            lastWindow.topRow = int((camera.state.top / 32) + 20)
-            lastWindow.bottomRow = int((camera.state.top / 32))
+        reported_row = []
+        windows_changed = False
+        if int(topRow) != last_window.topRow:
+            windows_changed = True
+            newWindow = calc_window(camera.state.top)
+            last_window.topRow = int((camera.state.top / 32) + 20)
+            last_window.bottomRow = int((camera.state.top / 32))
 
-            # print("Window " + str(lastWindow.topRow) + " " + str(lastWindow.bottomRow) )
-            windowRows = range(lastWindow.bottomRow, lastWindow.topRow)
+            # print("Window " + str(last_window.topRow) + " " + str(last_window.bottomRow) )
+            windowRows = range(last_window.bottomRow, last_window.topRow)
             # print( windowRows )
-            # print( entitieRows )
-            missingRows = []
-            # for windowRow in range( int(lastWindow.bottomRow), int(lastWindow.topRow+1)):
+            # print( entity_rows )
+            missing_rows = []
+            # for windowRow in range( int(last_window.bottomRow), int(last_window.topRow+1)):
             #     print("Check row " + str(windowRow))
-            #     if windowRow not in entitieRows:
-            #         missingRows.append(windowRow)
-            # missingRows =  lambda x: x not in windowRows, entitieRows
-            missingRows = [obj for obj in range(lastWindow.bottomRow - 1, lastWindow.topRow + 1) if
-                           obj not in entitieRows]
+            #     if windowRow not in entity_rows:
+            #         missing_rows.append(windowRow)
+            # missing_rows =  lambda x: x not in windowRows, entity_rows
+            missing_rows = [obj for obj in range(last_window.bottomRow - 1, last_window.topRow + 1) if
+                            obj not in entity_rows]
             # Create missing rows
-            for row in missingRows:
+            for row in missing_rows:
                 x = 0
-                entitieRows.append(int(row))
-                floor = getFloor(int(row))
+                entity_rows.append(int(row))
+                floor = get_floor(int(row))
                 # y = ((row-20) * 32) * -1
                 y = ((20 - row) * 32)
-                if row not in reportedRow:
-                    reportedRow.append(row)
+                if row not in reported_row:
+                    reported_row.append(row)
                     # print("Creating Row |" + str(int(row)) + "|")
                     # print( "|" + floor + "|")
                 for col in floor:
@@ -257,7 +254,6 @@ def main():
                         platforms.append(e)
                         entities.add(e)
                     x += 32
-
 
         # if camera.state.top > 0 and camera.state.top > LAST_TOP :
         #     #A new platform is required
@@ -288,38 +284,35 @@ def main():
         minRow = int(camera.state.top / 32)
 
         LAST_MIN = minRow
-        entitieRows = []
-        reportedRow = []
+        entity_rows = []
+        reported_row = []
         for e in entities:
-            drawThis = True
+            draw_this = True
             try:
-                if (windowsChanged and e.row > 0 and (int(e.row) > int(lastWindow.topRow) or int(e.row) < minRow)):
-                    # if e.row not in reportedRow:
+                if (windows_changed and e.row > 0 and (int(e.row) > int(last_window.topRow) or int(e.row) < minRow)):
+                    # if e.row not in reported_row:
                     #    print("Eat row " + str(e.row) + " " + str(minRow))
                     entities.remove(e)
                     platforms.remove(e)
-                    drawThis = False
-            except (AttributeError):
-                drawThis = True
-            if (drawThis):
+                    draw_this = False
+            except AttributeError:
+                draw_this = True
+            if draw_this:
                 try:
-                    if e.row not in entitieRows:
-                        entitieRows.append(e.row)
-                except (AttributeError):
+                    if e.row not in entity_rows:
+                        entity_rows.append(e.row)
+                except AttributeError:
                     pass
                 screen.blit(e.image, camera.apply(e))
 
-        # if windowsChanged:
-        #    print("Window( " + str(lastWindow.topRow) + " , " + str(lastWindow.bottomRow))
-        #    for mapLine in range(lastWindow.bottomRow - 1, lastWindow.topRow + 1):
+        # if windows_changed:
+        #    print("Window( " + str(last_window.topRow) + " , " + str(last_window.bottomRow))
+        #    for mapLine in range(last_window.bottomRow - 1, last_window.topRow + 1):
         #        print(getFloor(mapLine))
-
         # initialize font; must be called after 'pygame.init()' to avoid 'Font not Initialized' error
-
-
-        # render text
-        label = myfont.render("Window( " + str(lastWindow.topRow) + " , " + str(lastWindow.bottomRow), 1, (255, 255, 0))
-        screen.blit(label, (100, 100))
+        # Render text
+        # label = myfont.render("Window( " + str(last_window.topRow) + " , " + str(last_window.bottomRow), 1, (255, 255, 0))
+        # screen.blit(label, (100, 100))
 
         pygame.display.update()
 
