@@ -1,9 +1,17 @@
 #! /usr/bin/python
 
+try:
+    import pygame_sdl2
+    pygame_sdl2.import_as_pygame()
+except ImportError:
+    pass
+
 import pygame
 from pygame import *
 from spritesheet import SpriteSheet
 import random
+
+
 
 WIN_WIDTH = 800
 WIN_HEIGHT = 640
@@ -25,21 +33,34 @@ TOP_OFFSET = 0
 # (x, y, x + offset, y + offset)
 
 
-def get_floor(floor_number):
+
+def _get_floor(floor_number, dept):
     if (floor_number == 1):
         floor = "11111111111111111111111111111111111111111111"
     else:
         random.seed(floor_number)
         base = [" ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ",
-                " ", " ", "1", "2", " ", "4 ", "1", " ", " ", "1", " ", " ", "1", "2", " ", " ", " ", " ", " ", " ", "1"]
+                " ", " ", "1", "2", " ", "4", "1", " ", " ", "1", " ", " ", "1", "2", " ", " ", " ", " ", " ", " ", "1"]
         floor_array = random.sample(base, len(base))
         floor = "1"
+        pos = 0
         for item in floor_array:
+            if dept == 0:
+                if str(item) == "4" or str(item) == "2":
+                    bellow_floor = _get_floor((floor_number-1), (dept+1))
+                    if (bellow_floor[pos+1] == " " and str(item) == "4")\
+                        or (bellow_floor[pos+1] != " " and str(item) == "2"):
+                        item = "1"
+
+
             floor += str(item)
+            pos += 1
         floor += "1"
 
     return floor
 
+def get_floor(floor_number):
+    return _get_floor(floor_number, 0)
 
 def calc_window(camera_top):
     return Window(int((camera_top / 32) + 20), int((camera_top / 32)))
@@ -79,7 +100,7 @@ def main():
     platform_image_alt = load_image(game_sprite_sheet, 320, 928 )
     platform_image = load_image(game_sprite_sheet, 352, 928 )
     loose_platform_image = load_image(game_sprite_sheet, 448,960 )
-    platform_trampoline = load_image(game_sprite_sheet, 1, 640 )
+    platform_trampoline = load_image(game_sprite_sheet, 0, 640 )
 
 
     up = down = left = right = running = False
@@ -438,10 +459,13 @@ class Platform(BaseEntity):
         BaseEntity.__init__(self, map_row)
         global game_images
         # self.image = Surface((32, 32))
-        self.image = platform_image
+        self.image = self.default_image()
         self.image.convert()
         # self.image.fill(Color("#DDDDDD"))
         self.rect = Rect(x, y, 32, 32)
+
+    def default_image(self):
+        return platform_image
 
     def bellow_touch(self):
         self.image = platform_image_alt
@@ -463,6 +487,9 @@ class PlatformTrampoline(Platform):
         Platform.__init__(self, x, y, map_row)
         self.image = platform_trampoline
 
+    def default_image(self):
+        return platform_trampoline
+
     def is_rubber(self):
         return -10
 
@@ -475,9 +502,12 @@ class LooseBlock(BaseEntity):
         self.x_vel = 0
         self.y_vel = 0
         self.onGround = True
-        self.image = loose_platform_image
+        self.image = self.default_image()
         self.image.convert()
         self.rect = Rect(x, y, 32, 32)
+
+    def default_image(self):
+        return loose_platform_image
 
     def refresh_image(self):
         pass
@@ -503,7 +533,7 @@ class LooseBlock(BaseEntity):
         self.refresh_image()
 
     def collide(self, x_vel, y_vel, platforms):
-        global platform_image_alt
+        #global platform_image_alt
         for p in platforms:
             #only check collition with other platforms
             if p != self and pygame.sprite.collide_rect(self, p):
@@ -512,7 +542,7 @@ class LooseBlock(BaseEntity):
                     self.onGround = True
                     self.y_vel = 0
                 if y_vel < 0:
-                    p.image = platform_image
+                    #p.image = platform_image
                     self.rect.top = p.rect.bottom
                     self.y_vel = 0
 
