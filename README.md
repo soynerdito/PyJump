@@ -22,5 +22,5 @@ pygame
 
 #### Screenshot
 
-![alt tag](https://raw.githubusercontent.com/soynerdito/PyJump/master/documentation/screen_capture.png)
+![alt tag](https://raw.githubusercontent.com/soynerdito/PyJump/master/documentation/screenshotGame.png)
 
