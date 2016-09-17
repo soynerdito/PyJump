@@ -2,6 +2,7 @@
 
 try:
     import pygame_sdl2
+
     pygame_sdl2.import_as_pygame()
 except ImportError:
     pass
@@ -10,8 +11,6 @@ import pygame
 from pygame import *
 from spritesheet import SpriteSheet
 import random
-
-
 
 WIN_WIDTH = 800
 WIN_HEIGHT = 640
@@ -24,6 +23,7 @@ FLAGS = 0
 CAMERA_SLACK = 30
 
 TOP_OFFSET = 0
+
 
 # This class handles sprite sheets
 # This was taken from www.scriptefun.com/transcript-2-using
@@ -40,18 +40,17 @@ def _get_floor(floor_number, dept):
     else:
         random.seed(floor_number)
         base = [" ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ",
-                " ", " ", "1", "2", " ", "4", "1", " ", " ", "1", " ", " ", "1", "2", " ", " ", " ", " ", " ", " ", "1"]
+                " ", " ", "1", "2", " ", "4", "1", " ", " ", "1", " ", " ", "5", "2", " ", " ", " ", " ", " ", " ", "1"]
         floor_array = random.sample(base, len(base))
         floor = "1"
         pos = 0
         for item in floor_array:
             if dept == 0:
                 if str(item) == "4" or str(item) == "2":
-                    bellow_floor = _get_floor((floor_number-1), (dept+1))
-                    if (bellow_floor[pos+1] == " " and str(item) == "4")\
-                        or (bellow_floor[pos+1] != " " and str(item) == "2"):
+                    bellow_floor = _get_floor((floor_number - 1), (dept + 1))
+                    if (bellow_floor[pos + 1] == " " and str(item) == "4") \
+                            or (bellow_floor[pos + 1] != " " and str(item) == "2"):
                         item = "1"
-
 
             floor += str(item)
             pos += 1
@@ -59,14 +58,18 @@ def _get_floor(floor_number, dept):
 
     return floor
 
+
 def get_floor(floor_number):
     return _get_floor(floor_number, 0)
+
 
 def calc_window(camera_top):
     return Window(int((camera_top / 32) + 20), int((camera_top / 32)))
 
-def load_image( game_sprite_sheet, top_x, top_y ):
+
+def load_image(game_sprite_sheet, top_x, top_y):
     return game_sprite_sheet.image_at((top_x, top_y, 32, 32), colorkey=(90, 82, 104))
+
 
 def main():
     global cameraX, cameraY
@@ -76,6 +79,9 @@ def main():
     screen = pygame.display.set_mode(DISPLAY, FLAGS, DEPTH)
     pygame.display.set_caption("Use arrows to move!")
     timer = pygame.time.Clock()
+
+    # Declare events
+    ANIMATE_BLOCK_EVENT = pygame.USEREVENT + 1
 
     # Load sprite sheet
     global game_images
@@ -87,20 +93,25 @@ def main():
     global platform_image_alt
     global loose_platform_image
     global platform_trampoline
+    global live_platform_images
 
     game_sprite_sheet = SpriteSheet('simples_pimples.png')
     player_base_x = 832
 
     # Load sprites
-    player_jump = load_image(game_sprite_sheet, player_base_x, 32 )
+    player_jump = load_image(game_sprite_sheet, player_base_x, 32)
 
-    player_walk_1 = load_image(game_sprite_sheet, player_base_x + 32 * 1, 32 )
-    player_walk_2 = load_image(game_sprite_sheet, player_base_x + 32 * 2, 32 )
+    player_walk_1 = load_image(game_sprite_sheet, player_base_x + 32 * 1, 32)
+    player_walk_2 = load_image(game_sprite_sheet, player_base_x + 32 * 2, 32)
     player_image = player_walk_2
-    platform_image_alt = load_image(game_sprite_sheet, 320, 928 )
-    platform_image = load_image(game_sprite_sheet, 352, 928 )
-    loose_platform_image = load_image(game_sprite_sheet, 448,960 )
-    platform_trampoline = load_image(game_sprite_sheet, 0, 640 )
+    platform_image_alt = load_image(game_sprite_sheet, 320, 928)
+    platform_image = load_image(game_sprite_sheet, 352, 928)
+    loose_platform_image = load_image(game_sprite_sheet, 448, 960)
+    platform_trampoline = load_image(game_sprite_sheet, 0, 640)
+    start_live = [512, 928]
+    live_platform_images = []
+    for i in range(0,4):
+        live_platform_images.append( load_image(game_sprite_sheet, start_live[0], start_live[1] + (32 * i)))
 
 
     up = down = left = right = running = False
@@ -111,6 +122,7 @@ def main():
     player = Player(32, (32 * 15))
     platforms = []
     loose_platforms = []
+    live_platforms = []
     x = y = 0
     entity_rows = []
 
@@ -145,6 +157,11 @@ def main():
                 e = ExitBlock(x, y, row)
                 platforms.append(e)
                 entities.add(e)
+            if col == "5":
+                p = LiveBlock(x, y, row)
+                platforms.append(p)
+                live_platforms.append(p)
+                entities.add(p)
             x += 32
         y += 32
         x = 0
@@ -160,11 +177,15 @@ def main():
     LAST_MIN = 0
     lastItem = 0
 
+    # Create a timed event to animate a sprite
+    timed = pygame.time.set_timer(ANIMATE_BLOCK_EVENT, 60)
+
     last_window = Window(0, 0)
     myfont = pygame.font.SysFont("monospace", 15)
     WINY = 0
     while 1:
         timer.tick(60)
+        toggle_animate = False
 
         for e in pygame.event.get():
             if e.type == QUIT: raise SystemExit("QUIT")
@@ -189,6 +210,9 @@ def main():
                 right = False
             if e.type == KEYUP and e.key == K_LEFT:
                 left = False
+            if e.type == ANIMATE_BLOCK_EVENT:
+                # Animate block
+                toggle_animate = True
 
         # draw background
         for y in range(32):
@@ -244,6 +268,11 @@ def main():
                         p = PlatformTrampoline(x, y, row)
                         platforms.append(p)
                         entities.add(p)
+                    if col == "5":
+                        p = LiveBlock(x, y, row)
+                        platforms.append(p)
+                        live_platforms.append(p)
+                        entities.add(p)
                     if col == "E":
                         e = ExitBlock(x, y, int(row))
                         platforms.append(e)
@@ -254,9 +283,13 @@ def main():
 
         # update player, draw everything else
         player.update(up, down, left, right, running, platforms)
-        #update loose platforms
+        # update loose platforms
         for lp in loose_platforms:
-            lp.update( platforms)
+            lp.update(platforms)
+
+        if toggle_animate :
+            for lp in live_platforms:
+                lp.animate()
 
         minRow = int(camera.state.top / 32)
 
@@ -273,6 +306,10 @@ def main():
                     platforms.remove(e)
                     try:
                         loose_platforms.remove(e)
+                    except:
+                        pass
+                    try:
+                        live_platforms.remove(e)
                     except:
                         pass
                     draw_this = False
@@ -420,21 +457,20 @@ class Player(Entity):
                         p.step_over()
                     except:
                         pass
-                    #if p.image == platform_image_alt:
+                    # if p.image == platform_image_alt:
                     self.y_vel = p.is_rubber()
-                    #if p.is_rubber() != 0:
+                    # if p.is_rubber() != 0:
                     #    self.y_vel = -2
-                    #else:
+                    # else:
                     #    self.y_vel = 0
                 if y_vel < 0:
                     try:
                         p.bellow_touch()
                     except:
                         pass
-                    #p.image = platform_image_alt
+                    # p.image = platform_image_alt
                     self.rect.top = p.rect.bottom
                     self.y_vel = 0
-
 
 
 class Window():
@@ -450,8 +486,6 @@ class BaseEntity(Entity):
 
     def is_rubber(self):
         return 0
-
-
 
 
 class Platform(BaseEntity):
@@ -482,6 +516,7 @@ class Platform(BaseEntity):
     def update(self):
         pass
 
+
 class PlatformTrampoline(Platform):
     def __init__(self, x, y, map_row):
         Platform.__init__(self, x, y, map_row)
@@ -495,6 +530,31 @@ class PlatformTrampoline(Platform):
 
     def bellow_touch(self):
         pass
+
+
+class LiveBlock(Platform):
+    def __init__(self, x, y, map_row):
+        Platform.__init__(self, x, y, map_row)
+        self.image_iterator = iter(live_platform_images)
+        self.image = next(self.image_iterator)
+
+    def default_image(self):
+        return live_platform_images[0]
+
+    def animate(self):
+        #toggle image
+        try:
+            self.image = next(self.image_iterator)
+        except:
+            self.image_iterator = iter(live_platform_images)
+            self.image = next(self.image_iterator)
+
+    def is_rubber(self):
+        return 0
+
+    def bellow_touch(self):
+        pass
+
 
 class LooseBlock(BaseEntity):
     def __init__(self, x, y, map_row):
@@ -516,7 +576,7 @@ class LooseBlock(BaseEntity):
         self.y_vel = 1
 
     def update(self, platforms):
-        if self.y_vel ==0:
+        if self.y_vel == 0:
             return
         if not self.onGround:
             # only accelerate with gravity if in the air
@@ -527,32 +587,33 @@ class LooseBlock(BaseEntity):
         # increment in y direction
         self.rect.top += self.y_vel
         # assuming we're in the air
-        #self.onGround = False
+        # self.onGround = False
         # do y-axis collisions
         self.collide(0, self.y_vel, platforms)
         self.refresh_image()
 
     def collide(self, x_vel, y_vel, platforms):
-        #global platform_image_alt
+        # global platform_image_alt
         for p in platforms:
-            #only check collition with other platforms
+            # only check collition with other platforms
             if p != self and pygame.sprite.collide_rect(self, p):
                 if y_vel > 0:
                     self.rect.bottom = p.rect.top
                     self.onGround = True
                     self.y_vel = 0
                 if y_vel < 0:
-                    #p.image = platform_image
+                    # p.image = platform_image
                     self.rect.top = p.rect.bottom
                     self.y_vel = 0
 
 
 class FloatingBlock(LooseBlock):
     def __init__(self, x, y, map_row):
-        LooseBlock.__init__(self, x, y ,map_row)
+        LooseBlock.__init__(self, x, y, map_row)
 
     def step_over(self):
         self.y_vel = -1
+
 
 class ExitBlock(Platform):
     def __init__(self, x, y, map_row):
