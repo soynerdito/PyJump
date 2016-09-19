@@ -114,7 +114,8 @@ def main():
     player_walk_1 = load_image(game_sprite_sheet, player_base_x + 32 * 1, 32)
     player_walk_2 = load_image(game_sprite_sheet, player_base_x + 32 * 2, 32)
     player_image = player_walk_2
-    platform_image_alt = load_image(game_sprite_sheet, 320, 928)
+    
+    platform_image_alt = load_image(game_sprite_sheet, 672, 928)
     platform_image = load_image(game_sprite_sheet, 352, 928)
     loose_platform_image = load_image(game_sprite_sheet, 448, 960)
     platform_trampoline = load_image(game_sprite_sheet, 0, 640)
