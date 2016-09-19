@@ -6,7 +6,7 @@ try:
     pygame_sdl2.import_as_pygame()
 except ImportError:
     pass
-
+import sys
 import pygame
 from pygame import *
 from spritesheet import SpriteSheet
@@ -114,7 +114,7 @@ def main():
     player_walk_1 = load_image(game_sprite_sheet, player_base_x + 32 * 1, 32)
     player_walk_2 = load_image(game_sprite_sheet, player_base_x + 32 * 2, 32)
     player_image = player_walk_2
-    
+
     platform_image_alt = load_image(game_sprite_sheet, 672, 928)
     platform_image = load_image(game_sprite_sheet, 352, 928)
     loose_platform_image = load_image(game_sprite_sheet, 448, 960)
@@ -199,9 +199,12 @@ def main():
         toggle_animate = False
 
         for e in pygame.event.get():
-            if e.type == QUIT: raise SystemExit("QUIT")
+            if e.type == QUIT:
+                sys.exit(0)
+                #raise SystemExit("QUIT")
             if e.type == KEYDOWN and e.key == K_ESCAPE:
-                raise SystemExit("ESCAPE")
+                #raise SystemExit("ESCAPE")
+                sys.exit(0)
             if e.type == KEYDOWN and e.key == K_UP:
                 up = True
             if e.type == KEYDOWN and e.key == K_DOWN:
