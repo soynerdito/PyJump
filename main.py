@@ -33,8 +33,8 @@ TOP_OFFSET = 0
 # (x, y, x + offset, y + offset)
 
 
-
 def _get_floor(floor_number, dept):
+    global last_floor
     if (floor_number == 1):
         floor = "11111111111111111111111111111111111111111111"
     else:
@@ -47,6 +47,15 @@ def _get_floor(floor_number, dept):
         for item in floor_array:
             if dept == 0:
                 if str(item) == "4" or str(item) == "2":
+                    #check floor above
+                    try:
+                        over_floor = _get_floor((floor_number + 1), (dept + 1))
+                        if over_floor[pos + 1] != " " and ( str(item) == "4" \
+                            or str(item) == "2"):
+                            item = "1"
+                    except:
+                        pass
+
                     bellow_floor = _get_floor((floor_number - 1), (dept + 1))
                     if (bellow_floor[pos + 1] == " " and str(item) == "4") \
                             or (bellow_floor[pos + 1] != " " and str(item) == "2"):
@@ -55,6 +64,7 @@ def _get_floor(floor_number, dept):
             floor += str(item)
             pos += 1
         floor += "1"
+
 
     return floor
 
@@ -537,11 +547,15 @@ class LiveBlock(Platform):
         Platform.__init__(self, x, y, map_row)
         self.image_iterator = iter(live_platform_images)
         self.image = next(self.image_iterator)
+        # Be on/off default as random
+        self.is_active = bool(random.getrandbits(1))
 
     def default_image(self):
         return live_platform_images[0]
 
     def animate(self):
+        if not self.is_active:
+            return
         #toggle image
         try:
             self.image = next(self.image_iterator)
@@ -553,7 +567,7 @@ class LiveBlock(Platform):
         return 0
 
     def bellow_touch(self):
-        pass
+        self.is_active = not self.is_active
 
 
 class LooseBlock(BaseEntity):
