@@ -6,11 +6,12 @@ try:
     pygame_sdl2.import_as_pygame()
 except ImportError:
     pass
-import sys
 import pygame
-from pygame import *
-from spritesheet import SpriteSheet
 import random
+from pygame import *
+from threading import Timer
+
+from spritesheet import SpriteSheet
 
 WIN_WIDTH = 800
 WIN_HEIGHT = 640
@@ -24,7 +25,6 @@ CAMERA_SLACK = 30
 
 TOP_OFFSET = 0
 
-
 # This class handles sprite sheets
 # This was taken from www.scriptefun.com/transcript-2-using
 # sprite-sheets-and-drawing-the-background
@@ -32,11 +32,12 @@ TOP_OFFSET = 0
 # Note: When calling images_at the rect is the format:
 # (x, y, x + offset, y + offset)
 
+img_sprites = 'img/simples_pimples.png'
+
 
 def _get_floor(floor_number, dept):
-    global last_floor
-    if (floor_number == 1):
-        floor = "11111111111111111111111111111111111111111111"
+    if floor_number == 1:
+        floor = '11111111111111111111111111111111111111111111'
     else:
         random.seed(floor_number)
         base = [" ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ",
@@ -47,11 +48,11 @@ def _get_floor(floor_number, dept):
         for item in floor_array:
             if dept == 0:
                 if str(item) == "4" or str(item) == "2":
-                    #check floor above
+                    # check floor above
                     try:
                         over_floor = _get_floor((floor_number + 1), (dept + 1))
-                        if over_floor[pos + 1] != " " and ( str(item) == "4" \
-                            or str(item) == "2"):
+                        if over_floor[pos + 1] != " " and (str(item) == "4" \
+                                                                   or str(item) == "2"):
                             item = "1"
                     except:
                         pass
@@ -64,7 +65,6 @@ def _get_floor(floor_number, dept):
             floor += str(item)
             pos += 1
         floor += "1"
-
 
     return floor
 
@@ -103,9 +103,10 @@ def main():
     global platform_image_alt
     global loose_platform_image
     global platform_trampoline
+    global platform_trampoline_alt
     global live_platform_images
 
-    game_sprite_sheet = SpriteSheet('simples_pimples.png')
+    game_sprite_sheet = SpriteSheet(img_sprites)
     player_base_x = 832
 
     # Load sprites
@@ -119,11 +120,11 @@ def main():
     platform_image = load_image(game_sprite_sheet, 352, 928)
     loose_platform_image = load_image(game_sprite_sheet, 448, 960)
     platform_trampoline = load_image(game_sprite_sheet, 0, 640)
+    platform_trampoline_alt = load_image(game_sprite_sheet, 0, 672)
     start_live = [512, 928]
     live_platform_images = []
-    for i in range(0,4):
-        live_platform_images.append( load_image(game_sprite_sheet, start_live[0], start_live[1] + (32 * i)))
-
+    for i in range(0, 4):
+        live_platform_images.append(load_image(game_sprite_sheet, start_live[0], start_live[1] + (32 * i)))
 
     up = down = left = right = running = False
     bg = Surface((32, 32))
@@ -192,7 +193,7 @@ def main():
     timed = pygame.time.set_timer(ANIMATE_BLOCK_EVENT, 60)
 
     last_window = Window(0, 0)
-    myfont = pygame.font.SysFont("monospace", 15)
+    # myfont = pygame.font.SysFont("monospace", 15)
     WINY = 0
     while 1:
         timer.tick(60)
@@ -201,9 +202,9 @@ def main():
         for e in pygame.event.get():
             if e.type == QUIT:
                 sys.exit(0)
-                #raise SystemExit("QUIT")
+                # raise SystemExit("QUIT")
             if e.type == KEYDOWN and e.key == K_ESCAPE:
-                #raise SystemExit("ESCAPE")
+                # raise SystemExit("ESCAPE")
                 sys.exit(0)
             if e.type == KEYDOWN and e.key == K_UP:
                 up = True
@@ -240,17 +241,17 @@ def main():
         # View window changed
         reported_row = []
         windows_changed = False
-        if int(topRow) != last_window.topRow:
+        if int(topRow) != last_window.top_row:
             windows_changed = True
             newWindow = calc_window(camera.state.top)
-            last_window.topRow = int((camera.state.top / 32) + 20)
-            last_window.bottomRow = int((camera.state.top / 32))
+            last_window.top_row = int((camera.state.top / 32) + 20)
+            last_window.bottom_row = int((camera.state.top / 32))
 
             # print("Window " + str(last_window.topRow) + " " + str(last_window.bottomRow) )
-            windowRows = range(last_window.bottomRow, last_window.topRow)
+            windowRows = range(last_window.bottom_row, last_window.top_row)
             missing_rows = []
 
-            missing_rows = [obj for obj in range(last_window.bottomRow - 1, last_window.topRow + 1) if
+            missing_rows = [obj for obj in range(last_window.bottom_row - 1, last_window.top_row + 1) if
                             obj not in entity_rows]
             # Create missing rows
             for row in missing_rows:
@@ -301,7 +302,7 @@ def main():
         for lp in loose_platforms:
             lp.update(platforms)
 
-        if toggle_animate :
+        if toggle_animate:
             for lp in live_platforms:
                 lp.animate()
 
@@ -313,7 +314,7 @@ def main():
         for e in entities:
             draw_this = True
             try:
-                if windows_changed and e.row > 0 and (int(e.row) > int(last_window.topRow) or int(e.row) < minRow):
+                if windows_changed and e.row > 0 and (int(e.row) > int(last_window.top_row) or int(e.row) < minRow):
                     # if e.row not in reported_row:
                     #    print("Eat row " + str(e.row) + " " + str(minRow))
                     entities.remove(e)
@@ -488,9 +489,9 @@ class Player(Entity):
 
 
 class Window():
-    def __init__(self, topRow, bottomRow):
-        self.topRow = topRow
-        self.bottomRow = bottomRow
+    def __init__(self, top_row, bottom_row):
+        self.top_row = top_row
+        self.bottom_row = bottom_row
 
 
 class BaseEntity(Entity):
@@ -535,12 +536,21 @@ class PlatformTrampoline(Platform):
     def __init__(self, x, y, map_row):
         Platform.__init__(self, x, y, map_row)
         self.image = platform_trampoline
+        self.press_count=0
 
     def default_image(self):
         return platform_trampoline
 
     def is_rubber(self):
         return -10
+
+    def release(self):
+        self.image = self.default_image()
+
+    def step_over(self):
+        self.image = platform_trampoline_alt
+        t = Timer(0.1, self.release)
+        t.start()
 
     def bellow_touch(self):
         pass
@@ -560,7 +570,7 @@ class LiveBlock(Platform):
     def animate(self):
         if not self.is_active:
             return
-        #toggle image
+        # toggle image
         try:
             self.image = next(self.image_iterator)
         except:
@@ -623,7 +633,6 @@ class LooseBlock(BaseEntity):
                     # p.image = platform_image
                     self.rect.top = p.rect.bottom
                     self.y_vel = 0
-
 
 class FloatingBlock(LooseBlock):
     def __init__(self, x, y, map_row):
