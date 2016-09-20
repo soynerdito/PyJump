@@ -8,6 +8,7 @@ except ImportError:
     pass
 import pygame
 import random
+from random import randint
 import sys
 from pygame import *
 from threading import Timer
@@ -25,6 +26,7 @@ FLAGS = 0
 CAMERA_SLACK = 30
 
 TOP_OFFSET = 0
+
 
 # This class handles sprite sheets
 # This was taken from www.scriptefun.com/transcript-2-using
@@ -106,6 +108,8 @@ def main():
     global platform_trampoline
     global platform_trampoline_alt
     global live_platform_images
+    global platform_image_broke_1
+    global platform_image_broke_2
 
     game_sprite_sheet = SpriteSheet(img_sprites)
     player_base_x = 832
@@ -122,6 +126,8 @@ def main():
     loose_platform_image = load_image(game_sprite_sheet, 448, 960)
     platform_trampoline = load_image(game_sprite_sheet, 0, 640)
     platform_trampoline_alt = load_image(game_sprite_sheet, 0, 672)
+    platform_image_broke_1 = load_image(game_sprite_sheet, 704, 928)
+    platform_image_broke_2 = load_image(game_sprite_sheet, 736, 928)
     #platform_trampoline_alt =game_sprite_sheet.image_at((252, 672, 32, 16), colorkey=(90, 82, 104))
 
     start_live = [512, 928]
@@ -151,7 +157,10 @@ def main():
         entity_rows.append(int(row))
         for col in floor:
             if col == "1":
-                p = Platform(x, y, row)
+                if randint(0,9) == 3:
+                    p = PlatformCrackable(x, y, (int(row)))
+                else:
+                    p = Platform(x, y, (int(row)))
                 platforms.append(p)
                 entities.add(p)
             if col == "2":
@@ -269,7 +278,10 @@ def main():
                     # print( "|" + floor + "|")
                 for col in floor:
                     if col == "1":
-                        p = Platform(x, y, (int(row)))
+                        if randint(0,9) == 3:
+                            p = PlatformCrackable(x, y, (int(row)))
+                        else:
+                            p = Platform(x, y, (int(row)))
                         platforms.append(p)
                         entities.add(p)
                     if col == "2":
@@ -516,11 +528,13 @@ class Platform(BaseEntity):
         # self.image.fill(Color("#DDDDDD"))
         self.rect = Rect(x, y, 32, 32)
 
+
     def default_image(self):
         return platform_image
 
     def bellow_touch(self):
         self.image = platform_image_alt
+
 
     def step_over(self):
         pass
@@ -533,6 +547,19 @@ class Platform(BaseEntity):
 
     def update(self):
         pass
+
+class PlatformCrackable(Platform):
+    def __init__(self, x, y, map_row):
+        Platform.__init__(self, x, y, map_row)
+        global platform_image_broke_1
+        global platform_image_broke_2
+        self.image_pos = 0
+        self.images = [ self.default_image(), platform_image_broke_1, platform_image_broke_2 ]
+
+    def bellow_touch(self):
+        if self.image_pos < (len(self.images)-1):
+            self.image_pos +=1
+            self.image = self.images[self.image_pos]
 
 
 class PlatformTrampoline(Platform):
