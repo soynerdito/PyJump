@@ -8,6 +8,7 @@ except ImportError:
     pass
 import pygame
 import random
+import sys
 from pygame import *
 from threading import Timer
 
