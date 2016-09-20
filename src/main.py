@@ -33,7 +33,7 @@ TOP_OFFSET = 0
 # Note: When calling images_at the rect is the format:
 # (x, y, x + offset, y + offset)
 
-img_sprites = 'img/simples_pimples.png'
+img_sprites = 'img/simples_pimples2.png'
 
 
 def _get_floor(floor_number, dept):
@@ -122,6 +122,8 @@ def main():
     loose_platform_image = load_image(game_sprite_sheet, 448, 960)
     platform_trampoline = load_image(game_sprite_sheet, 0, 640)
     platform_trampoline_alt = load_image(game_sprite_sheet, 0, 672)
+    #platform_trampoline_alt =game_sprite_sheet.image_at((252, 672, 32, 16), colorkey=(90, 82, 104))
+
     start_live = [512, 928]
     live_platform_images = []
     for i in range(0, 4):
@@ -536,6 +538,7 @@ class Platform(BaseEntity):
 class PlatformTrampoline(Platform):
     def __init__(self, x, y, map_row):
         Platform.__init__(self, x, y, map_row)
+        self.rect = Rect(x, y, 32, 32)
         self.image = platform_trampoline
         self.press_count=0
 
