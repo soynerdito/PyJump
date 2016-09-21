@@ -27,7 +27,6 @@ CAMERA_SLACK = 30
 
 TOP_OFFSET = 0
 
-
 # This class handles sprite sheets
 # This was taken from www.scriptefun.com/transcript-2-using
 # sprite-sheets-and-drawing-the-background
@@ -36,6 +35,29 @@ TOP_OFFSET = 0
 # (x, y, x + offset, y + offset)
 
 img_sprites = 'img/simples_pimples2.png'
+
+
+class ScoreBoard:
+    def __init__(self, screen):
+        self.screen = screen
+        self.score = 0
+        self.highest = 0
+        self.font = pygame.font.SysFont(None, 25)
+
+    def update(self):
+        text = self.font.render("Score: " + str(self.score), True, (255, 255, 255))
+        self.screen.blit(text, (0, 0))
+        text = self.font.render("Highest Score: " + str(self.highest), True, (255, 255, 255))
+        self.screen.blit(text, (0, 30))
+
+    def set_score(self, score):
+        self.score = score
+        if score > self.highest:
+            self.highest = score
+
+    def set_score_smart(self, score):
+        if score > self.score:
+            self.score = score
 
 
 def _get_floor(floor_number, dept):
@@ -93,6 +115,9 @@ def main():
     pygame.display.set_caption("Use arrows to move!")
     timer = pygame.time.Clock()
 
+    # initialize scoreboard
+    scoreboard = ScoreBoard(screen)
+
     # Declare events
     ANIMATE_BLOCK_EVENT = pygame.USEREVENT + 1
 
@@ -102,14 +127,14 @@ def main():
     global player_walk_1
     global player_walk_2
     global player_jump
-    global platform_image
-    global platform_image_alt
     global loose_platform_image
     global platform_trampoline
     global platform_trampoline_alt
     global live_platform_images
     global platform_image_broke_1
     global platform_image_broke_2
+    global platform_images
+    global platform_images_alt
 
     game_sprite_sheet = SpriteSheet(img_sprites)
     player_base_x = 832
@@ -123,12 +148,23 @@ def main():
 
     platform_image_alt = load_image(game_sprite_sheet, 672, 928)
     platform_image = load_image(game_sprite_sheet, 352, 928)
+    # create platform images
+    platform_images = [load_image(game_sprite_sheet, 352, 928), load_image(game_sprite_sheet, 352, 928 + 32),
+                       load_image(game_sprite_sheet, 352, 928 + 32 * 2),
+                       load_image(game_sprite_sheet, 352, 928 + 32 * 3)]
+
+    # create alternate platform images
+    # platform_image_alt = load_image(game_sprite_sheet, 672, 928)
+    platform_images_alt = [load_image(game_sprite_sheet, 672, 928), load_image(game_sprite_sheet, 672, 928 + 32),
+                           load_image(game_sprite_sheet, 672, 928 + 32 * 2),
+                           load_image(game_sprite_sheet, 672, 928 + 32 * 3)]
+
     loose_platform_image = load_image(game_sprite_sheet, 448, 960)
     platform_trampoline = load_image(game_sprite_sheet, 0, 640)
     platform_trampoline_alt = load_image(game_sprite_sheet, 0, 672)
     platform_image_broke_1 = load_image(game_sprite_sheet, 704, 928)
     platform_image_broke_2 = load_image(game_sprite_sheet, 736, 928)
-    #platform_trampoline_alt =game_sprite_sheet.image_at((252, 672, 32, 16), colorkey=(90, 82, 104))
+    # platform_trampoline_alt =game_sprite_sheet.image_at((252, 672, 32, 16), colorkey=(90, 82, 104))
 
     start_live = [512, 928]
     live_platform_images = []
@@ -157,7 +193,7 @@ def main():
         entity_rows.append(int(row))
         for col in floor:
             if col == "1":
-                if randint(0,9) == 3:
+                if randint(0, 9) == 3:
                     p = PlatformCrackable(x, y, (int(row)))
                 else:
                     p = Platform(x, y, (int(row)))
@@ -250,6 +286,10 @@ def main():
         # print("Window " + str((camera.state.top/32)+20) + " " + str((camera.state.top/32)))
 
         topRow = (camera.state.top / 32) + 20
+
+        # Update scoreboard
+        scoreboard.set_score((camera.state.top / 32))
+
         # View window changed
         reported_row = []
         windows_changed = False
@@ -278,7 +318,7 @@ def main():
                     # print( "|" + floor + "|")
                 for col in floor:
                     if col == "1":
-                        if randint(0,9) == 3:
+                        if randint(0, 9) == 3:
                             p = PlatformCrackable(x, y, (int(row)))
                         else:
                             p = Platform(x, y, (int(row)))
@@ -353,6 +393,7 @@ def main():
                     pass
                 screen.blit(e.image, camera.apply(e))
 
+        scoreboard.update()
         pygame.display.update()
 
 
@@ -520,27 +561,29 @@ class BaseEntity(Entity):
 
 class Platform(BaseEntity):
     def __init__(self, x, y, map_row):
+        global platform_images
+        global platform_images_alt
         BaseEntity.__init__(self, map_row)
-        global game_images
         # self.image = Surface((32, 32))
+        self.image_index = randint(0, len(platform_images) - 1)
         self.image = self.default_image()
         self.image.convert()
         # self.image.fill(Color("#DDDDDD"))
         self.rect = Rect(x, y, 32, 32)
 
-
     def default_image(self):
-        return platform_image
+        return platform_images[self.image_index]
+        # return platform_image
 
     def bellow_touch(self):
-        self.image = platform_image_alt
-
+        self.image = platform_images_alt[self.image_index]
+        # self.image = platform_image_alt
 
     def step_over(self):
         pass
 
     def is_rubber(self):
-        if self.image == platform_image_alt:
+        if self.image == platform_images_alt[self.image_index]:
             return -2
         else:
             return 0
@@ -548,17 +591,18 @@ class Platform(BaseEntity):
     def update(self):
         pass
 
+
 class PlatformCrackable(Platform):
     def __init__(self, x, y, map_row):
         Platform.__init__(self, x, y, map_row)
         global platform_image_broke_1
         global platform_image_broke_2
         self.image_pos = 0
-        self.images = [ self.default_image(), platform_image_broke_1, platform_image_broke_2 ]
+        self.images = [self.default_image(), platform_image_broke_1, platform_image_broke_2]
 
     def bellow_touch(self):
-        if self.image_pos < (len(self.images)-1):
-            self.image_pos +=1
+        if self.image_pos < (len(self.images) - 1):
+            self.image_pos += 1
             self.image = self.images[self.image_pos]
 
 
@@ -567,7 +611,7 @@ class PlatformTrampoline(Platform):
         Platform.__init__(self, x, y, map_row)
         self.rect = Rect(x, y, 32, 32)
         self.image = platform_trampoline
-        self.press_count=0
+        self.press_count = 0
 
     def default_image(self):
         return platform_trampoline
@@ -664,6 +708,7 @@ class LooseBlock(BaseEntity):
                     # p.image = platform_image
                     self.rect.top = p.rect.bottom
                     self.y_vel = 0
+
 
 class FloatingBlock(LooseBlock):
     def __init__(self, x, y, map_row):
