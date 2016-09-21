@@ -42,7 +42,7 @@ class ScoreBoard:
         self.screen = screen
         self.score = 0
         self.highest = 0
-        self.font = pygame.font.SysFont(None, 25)
+        self.font = pygame.font.Font("freesansbold.ttf", 25)		
 
     def update(self):
         text = self.font.render("Score: " + str(self.score), True, (255, 255, 255))
