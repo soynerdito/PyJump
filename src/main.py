@@ -51,13 +51,13 @@ class ScoreBoard:
         self.screen.blit(text, (0, 30))
 
     def set_score(self, score):
-        self.score = score
-        if score > self.highest:
-            self.highest = score
+        self.score = int(score)
+        if int(score) > self.highest:
+            self.highest = int(score)
 
     def set_score_smart(self, score):
-        if score > self.score:
-            self.score = score
+        if int(score) > self.score:
+            self.score = int(score)
 
 
 def _get_floor(floor_number, dept):
