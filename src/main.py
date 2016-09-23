@@ -109,6 +109,7 @@ def load_image(game_sprite_sheet, top_x, top_y):
 def main():
     global cameraX, cameraY
     global TOP_OFFSET
+
     CURRENT_TOP = 0
     pygame.init()
     screen = pygame.display.set_mode(DISPLAY, FLAGS, DEPTH)
@@ -122,10 +123,6 @@ def main():
     ANIMATE_BLOCK_EVENT = pygame.USEREVENT + 1
 
     # Load sprite sheet
-    global player_image
-    global player_walk_1
-    global player_walk_2
-    global player_jump
     global loose_platform_image
 
 
@@ -169,7 +166,7 @@ def main():
     bg.convert()
     bg.fill(Color("#000000"))
     entities = pygame.sprite.Group()
-    player = Player(32, (32 * 15))
+    player = Player(32, (32 * 15), player_image,[player_walk_1, player_walk_2], player_jump )
     platforms = []
     loose_platforms = []
     live_platforms = []
@@ -426,9 +423,8 @@ class Entity(pygame.sprite.Sprite):
 
 
 class Player(Entity):
-    def __init__(self, x, y):
+    def __init__(self, x, y, image_standing, images_walking, image_jump):
         Entity.__init__(self)
-        global game_images
         self.flip_pos = x
         self.look_right = True
         self.walk_status = True
@@ -436,7 +432,11 @@ class Player(Entity):
         self.y_vel = 0
         self.onGround = False
         # self.image = Surface((32,32))
-        self.image = player_image
+        self.image_standing = image_standing
+        self.images_walking = images_walking
+        self.image_jump = image_jump
+
+        self.image = self.image_standing
         # self.image.fill(Color("#0000FF"))
         self.image.convert()
         self.rect = Rect(x, y, 32, 32)
@@ -446,16 +446,16 @@ class Player(Entity):
         tmp_image = self.image
         if self.rect.y == self.last_rect.y:
             if self.last_rect.x == self.rect.x:
-                tmp_image = player_image
+                tmp_image = self.image_standing
             elif self.flip_pos != self.rect.x and abs(abs(self.flip_pos) - abs(self.rect.x)) > 6:
                 self.walk_status = not self.walk_status
                 self.flip_pos = self.rect.x
                 if self.walk_status:
-                    tmp_image = player_walk_1
+                    tmp_image = self.images_walking[0]
                 else:
-                    tmp_image = player_walk_2
+                    tmp_image = self.images_walking[1]
         else:
-            tmp_image = player_jump
+            tmp_image = self.image_jump
 
         if not self.look_right and tmp_image != self.image:
             tmp_image = pygame.transform.flip(tmp_image, True, False)
@@ -503,7 +503,6 @@ class Player(Entity):
         self.refresh_image()
 
     def collide(self, x_vel, y_vel, platforms):
-        global platform_image_alt
         for p in platforms:
             if pygame.sprite.collide_rect(self, p):
                 if isinstance(p, ExitBlock):
