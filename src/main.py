@@ -122,19 +122,12 @@ def main():
     ANIMATE_BLOCK_EVENT = pygame.USEREVENT + 1
 
     # Load sprite sheet
-    global game_images
     global player_image
     global player_walk_1
     global player_walk_2
     global player_jump
     global loose_platform_image
-    global platform_trampoline
-    global platform_trampoline_alt
-    global live_platform_images
-    global platform_image_broke_1
-    global platform_image_broke_2
-    global platform_images
-    global platform_images_alt
+
 
     game_sprite_sheet = SpriteSheet(img_sprites)
     player_base_x = 832
@@ -194,9 +187,9 @@ def main():
         for col in floor:
             if col == "1":
                 if randint(0, 9) == 3:
-                    p = PlatformCrackable(x, y, (int(row)))
+                    p = PlatformCrackable(x, y, (int(row)), [platform_image, platform_image_broke_1, platform_image_broke_2 ])
                 else:
-                    p = Platform(x, y, (int(row)))
+                    p = Platform(x, y, (int(row)), platform_images, platform_images_alt)
                 platforms.append(p)
                 entities.add(p)
             if col == "2":
@@ -210,7 +203,7 @@ def main():
                 loose_platforms.append(p)
                 entities.add(p)
             if col == "4":
-                p = PlatformTrampoline(x, y, row)
+                p = PlatformTrampoline(x, y, row, platform_trampoline, platform_trampoline_alt)
                 platforms.append(p)
                 entities.add(p)
             if col == "E":
@@ -218,7 +211,7 @@ def main():
                 platforms.append(e)
                 entities.add(e)
             if col == "5":
-                p = LiveBlock(x, y, row)
+                p = LiveBlock(x, y, row, live_platform_images)
                 platforms.append(p)
                 live_platforms.append(p)
                 entities.add(p)
@@ -319,9 +312,9 @@ def main():
                 for col in floor:
                     if col == "1":
                         if randint(0, 9) == 3:
-                            p = PlatformCrackable(x, y, (int(row)))
+                            p = PlatformCrackable(x, y, (int(row)), [platform_image,platform_image_broke_1, platform_image_broke_2 ])
                         else:
-                            p = Platform(x, y, (int(row)))
+                            p = Platform(x, y, (int(row)), platform_images, platform_images_alt)
                         platforms.append(p)
                         entities.add(p)
                     if col == "2":
@@ -335,18 +328,18 @@ def main():
                         loose_platforms.append(p)
                         entities.add(p)
                     if col == "4":
-                        p = PlatformTrampoline(x, y, row)
+                        p = PlatformTrampoline(x, y, row, platform_trampoline, platform_trampoline_alt)
                         platforms.append(p)
                         entities.add(p)
+                    if col == "E":
+                        e = ExitBlock(x, y, row)
+                        platforms.append(e)
+                        entities.add(e)
                     if col == "5":
-                        p = LiveBlock(x, y, row)
+                        p = LiveBlock(x, y, row, live_platform_images )
                         platforms.append(p)
                         live_platforms.append(p)
                         entities.add(p)
-                    if col == "E":
-                        e = ExitBlock(x, y, int(row))
-                        platforms.append(e)
-                        entities.add(e)
                     x += 32
         # check if row not found
         # row = (camera.state.top/32)+20
@@ -560,32 +553,35 @@ class BaseEntity(Entity):
 
 
 class Platform(BaseEntity):
-    def __init__(self, x, y, map_row):
-        global platform_images
-        global platform_images_alt
+    def __init__(self, x, y, map_row, images, images_alt):
         BaseEntity.__init__(self, map_row)
         # self.image = Surface((32, 32))
-        self.image_index = randint(0, len(platform_images) - 1)
+        self.images = images
+        self.images_alt = images_alt
+        self.image_index = randint(0, len(images) - 1)
         self.image = self.default_image()
         self.image.convert()
         # self.image.fill(Color("#DDDDDD"))
         self.rect = Rect(x, y, 32, 32)
 
     def default_image(self):
-        return platform_images[self.image_index]
+        return self.images[self.image_index]
         # return platform_image
 
     def bellow_touch(self):
-        self.image = platform_images_alt[self.image_index]
+        self.image = self.images_alt[self.image_index]
         # self.image = platform_image_alt
 
     def step_over(self):
         pass
 
     def is_rubber(self):
-        if self.image == platform_images_alt[self.image_index]:
-            return -2
-        else:
+        try:
+            if self.image == self.images_alt[self.image_index]:
+                return -2
+            else:
+                return 0
+        except:
             return 0
 
     def update(self):
@@ -593,12 +589,16 @@ class Platform(BaseEntity):
 
 
 class PlatformCrackable(Platform):
-    def __init__(self, x, y, map_row):
-        Platform.__init__(self, x, y, map_row)
-        global platform_image_broke_1
-        global platform_image_broke_2
+    def __init__(self, x, y, map_row, images):
+        Platform.__init__(self, x, y, map_row, images, None)
+        #global platform_image_broke_1
+        #global platform_image_broke_2
         self.image_pos = 0
-        self.images = [self.default_image(), platform_image_broke_1, platform_image_broke_2]
+        #self.images = [self.default_image(), platform_image_broke_1, platform_image_broke_2]
+        self.images = images
+
+    def default_image(self):
+        return self.images[0]
 
     def bellow_touch(self):
         if self.image_pos < (len(self.images) - 1):
@@ -607,14 +607,16 @@ class PlatformCrackable(Platform):
 
 
 class PlatformTrampoline(Platform):
-    def __init__(self, x, y, map_row):
-        Platform.__init__(self, x, y, map_row)
+    def __init__(self, x, y, map_row, image, image_alt ):
+        Platform.__init__(self, x, y, map_row, [image], None)
         self.rect = Rect(x, y, 32, 32)
-        self.image = platform_trampoline
+        self.image = image
+#        self.image_normal = image
+        self.image_alt = image_alt
         self.press_count = 0
 
-    def default_image(self):
-        return platform_trampoline
+#    def default_image(self):
+#        return self.image_normal
 
     def is_rubber(self):
         return -10
@@ -623,7 +625,7 @@ class PlatformTrampoline(Platform):
         self.image = self.default_image()
 
     def step_over(self):
-        self.image = platform_trampoline_alt
+        self.image = self.image_alt
         t = Timer(0.1, self.release)
         t.start()
 
@@ -632,15 +634,15 @@ class PlatformTrampoline(Platform):
 
 
 class LiveBlock(Platform):
-    def __init__(self, x, y, map_row):
-        Platform.__init__(self, x, y, map_row)
-        self.image_iterator = iter(live_platform_images)
-        self.image = next(self.image_iterator)
+    def __init__(self, x, y, map_row, images):
+        Platform.__init__(self, x, y, map_row, images, None)
+        self.image_iterator = iter(self.images)
+        #self.image = next(self.image_iterator)
         # Be on/off default as random
         self.is_active = bool(random.getrandbits(1))
 
-    def default_image(self):
-        return live_platform_images[0]
+#    def default_image(self):
+#        return self.image_normal
 
     def animate(self):
         if not self.is_active:
@@ -649,7 +651,7 @@ class LiveBlock(Platform):
         try:
             self.image = next(self.image_iterator)
         except:
-            self.image_iterator = iter(live_platform_images)
+            self.image_iterator = iter(self.images)
             self.image = next(self.image_iterator)
 
     def is_rubber(self):
