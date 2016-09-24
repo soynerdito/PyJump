@@ -42,7 +42,7 @@ class ScoreBoard:
         self.screen = screen
         self.score = 0
         self.highest = 0
-        self.font = pygame.font.Font("freesansbold.ttf", 25)		
+        self.font = pygame.font.Font("freesansbold.ttf", 25)
 
     def update(self):
         text = self.font.render("Score: " + str(self.score), True, (255, 255, 255))
@@ -107,7 +107,7 @@ def load_image(game_sprite_sheet, top_x, top_y):
 
 
 def main():
-    global cameraX, cameraY
+    # global cameraX, cameraY
     global TOP_OFFSET
 
     CURRENT_TOP = 0
@@ -123,9 +123,6 @@ def main():
     ANIMATE_BLOCK_EVENT = pygame.USEREVENT + 1
 
     # Load sprite sheet
-    global loose_platform_image
-
-
     game_sprite_sheet = SpriteSheet(img_sprites)
     player_base_x = 832
 
@@ -144,7 +141,6 @@ def main():
                        load_image(game_sprite_sheet, 352, 928 + 32 * 3)]
 
     # create alternate platform images
-    # platform_image_alt = load_image(game_sprite_sheet, 672, 928)
     platform_images_alt = [load_image(game_sprite_sheet, 672, 928), load_image(game_sprite_sheet, 672, 928 + 32),
                            load_image(game_sprite_sheet, 672, 928 + 32 * 2),
                            load_image(game_sprite_sheet, 672, 928 + 32 * 3)]
@@ -154,7 +150,7 @@ def main():
     platform_trampoline_alt = load_image(game_sprite_sheet, 0, 672)
     platform_image_broke_1 = load_image(game_sprite_sheet, 704, 928)
     platform_image_broke_2 = load_image(game_sprite_sheet, 736, 928)
-    # platform_trampoline_alt =game_sprite_sheet.image_at((252, 672, 32, 16), colorkey=(90, 82, 104))
+
 
     start_live = [512, 928]
     live_platform_images = []
@@ -166,7 +162,7 @@ def main():
     bg.convert()
     bg.fill(Color("#000000"))
     entities = pygame.sprite.Group()
-    player = Player(32, (32 * 15), player_image,[player_walk_1, player_walk_2], player_jump )
+    player = Player(32, (32 * 15), player_image, [player_walk_1, player_walk_2], player_jump)
     platforms = []
     loose_platforms = []
     live_platforms = []
@@ -174,23 +170,21 @@ def main():
     entity_rows = []
 
     # Build the level
-    # y = 0
-    for map in range(0, 20):
-        row = 20 - map
-
+    for row in list(reversed(range(21))):
         floor = get_floor(row)
         # print(floor)
         entity_rows.append(int(row))
         for col in floor:
             if col == "1":
                 if randint(0, 9) == 3:
-                    p = PlatformCrackable(x, y, (int(row)), [platform_image, platform_image_broke_1, platform_image_broke_2 ])
+                    p = PlatformCrackable(x, y, (int(row)),
+                                          [platform_image, platform_image_broke_1, platform_image_broke_2])
                 else:
                     p = Platform(x, y, (int(row)), platform_images, platform_images_alt)
                 platforms.append(p)
                 entities.add(p)
             if col == "2":
-                p = LooseBlock(x, y, row)
+                p = LooseBlock(x, y, row, loose_platform_image)
                 platforms.append(p)
                 loose_platforms.append(p)
                 entities.add(p)
@@ -218,21 +212,14 @@ def main():
 
     my_level = get_floor(1)
     total_level_width = len(my_level) * 32
-    # total_level_width  = len(level[0])*32
-    # total_level_height = len(level)*32
     total_level_height = 20 * 32
     camera = Camera(complex_camera, total_level_width, total_level_height)
     entities.add(player)
-    LAST_TOP = 0
-    LAST_MIN = 0
-    lastItem = 0
 
     # Create a timed event to animate a sprite
-    timed = pygame.time.set_timer(ANIMATE_BLOCK_EVENT, 60)
+    pygame.time.set_timer(ANIMATE_BLOCK_EVENT, 60)
 
     last_window = Window(0, 0)
-    # myfont = pygame.font.SysFont("monospace", 15)
-    WINY = 0
     while 1:
         timer.tick(60)
         toggle_animate = False
@@ -275,7 +262,7 @@ def main():
         camera.update(player)
         # print("Window " + str((camera.state.top/32)+20) + " " + str((camera.state.top/32)))
 
-        topRow = (camera.state.top / 32) + 20
+        top_row = (camera.state.top / 32) + 20
 
         # Update scoreboard
         scoreboard.set_score((camera.state.top / 32))
@@ -283,15 +270,11 @@ def main():
         # View window changed
         reported_row = []
         windows_changed = False
-        if int(topRow) != last_window.top_row:
+        if int(top_row) != last_window.top_row:
             windows_changed = True
-            newWindow = calc_window(camera.state.top)
+            #newWindow = calc_window(camera.state.top)
             last_window.top_row = int((camera.state.top / 32) + 20)
             last_window.bottom_row = int((camera.state.top / 32))
-
-            # print("Window " + str(last_window.topRow) + " " + str(last_window.bottomRow) )
-            windowRows = range(last_window.bottom_row, last_window.top_row)
-            missing_rows = []
 
             missing_rows = [obj for obj in range(last_window.bottom_row - 1, last_window.top_row + 1) if
                             obj not in entity_rows]
@@ -300,7 +283,6 @@ def main():
                 x = 0
                 entity_rows.append(int(row))
                 floor = get_floor(int(row))
-                # y = ((row-20) * 32) * -1
                 y = ((20 - row) * 32)
                 if row not in reported_row:
                     reported_row.append(row)
@@ -309,13 +291,14 @@ def main():
                 for col in floor:
                     if col == "1":
                         if randint(0, 9) == 3:
-                            p = PlatformCrackable(x, y, (int(row)), [platform_image,platform_image_broke_1, platform_image_broke_2 ])
+                            p = PlatformCrackable(x, y, (int(row)),
+                                                  [platform_image, platform_image_broke_1, platform_image_broke_2])
                         else:
                             p = Platform(x, y, (int(row)), platform_images, platform_images_alt)
                         platforms.append(p)
                         entities.add(p)
                     if col == "2":
-                        p = LooseBlock(x, y, row)
+                        p = LooseBlock(x, y, row, loose_platform_image)
                         platforms.append(p)
                         loose_platforms.append(p)
                         entities.add(p)
@@ -333,29 +316,25 @@ def main():
                         platforms.append(e)
                         entities.add(e)
                     if col == "5":
-                        p = LiveBlock(x, y, row, live_platform_images )
+                        p = LiveBlock(x, y, row, live_platform_images)
                         platforms.append(p)
                         live_platforms.append(p)
                         entities.add(p)
                     x += 32
-        # check if row not found
-        # row = (camera.state.top/32)+20
 
         # update player, draw everything else
         player.update(up, down, left, right, running, platforms)
-        # update loose platforms
-        for lp in loose_platforms:
-            lp.update(platforms)
 
+        # update loose platforms
+        [lp.update(platforms) for lp in loose_platforms]
+
+        # Do animation for live platform (fans)
         if toggle_animate:
-            for lp in live_platforms:
-                lp.animate()
+            [lp.animate() for lp in live_platforms]
 
         minRow = int(camera.state.top / 32)
 
-        LAST_MIN = minRow
         entity_rows = []
-        reported_row = []
         for e in entities:
             draw_this = True
             try:
@@ -431,13 +410,11 @@ class Player(Entity):
         self.x_vel = 0
         self.y_vel = 0
         self.onGround = False
-        # self.image = Surface((32,32))
         self.image_standing = image_standing
         self.images_walking = images_walking
         self.image_jump = image_jump
 
         self.image = self.image_standing
-        # self.image.fill(Color("#0000FF"))
         self.image.convert()
         self.rect = Rect(x, y, 32, 32)
         self.last_rect = Rect(self.rect)
@@ -554,22 +531,18 @@ class BaseEntity(Entity):
 class Platform(BaseEntity):
     def __init__(self, x, y, map_row, images, images_alt):
         BaseEntity.__init__(self, map_row)
-        # self.image = Surface((32, 32))
         self.images = images
         self.images_alt = images_alt
         self.image_index = randint(0, len(images) - 1)
         self.image = self.default_image()
         self.image.convert()
-        # self.image.fill(Color("#DDDDDD"))
         self.rect = Rect(x, y, 32, 32)
 
     def default_image(self):
         return self.images[self.image_index]
-        # return platform_image
 
     def bellow_touch(self):
         self.image = self.images_alt[self.image_index]
-        # self.image = platform_image_alt
 
     def step_over(self):
         pass
@@ -590,10 +563,7 @@ class Platform(BaseEntity):
 class PlatformCrackable(Platform):
     def __init__(self, x, y, map_row, images):
         Platform.__init__(self, x, y, map_row, images, None)
-        #global platform_image_broke_1
-        #global platform_image_broke_2
         self.image_pos = 0
-        #self.images = [self.default_image(), platform_image_broke_1, platform_image_broke_2]
         self.images = images
 
     def default_image(self):
@@ -606,16 +576,12 @@ class PlatformCrackable(Platform):
 
 
 class PlatformTrampoline(Platform):
-    def __init__(self, x, y, map_row, image, image_alt ):
+    def __init__(self, x, y, map_row, image, image_alt):
         Platform.__init__(self, x, y, map_row, [image], None)
         self.rect = Rect(x, y, 32, 32)
         self.image = image
-#        self.image_normal = image
         self.image_alt = image_alt
         self.press_count = 0
-
-#    def default_image(self):
-#        return self.image_normal
 
     def is_rubber(self):
         return -10
@@ -636,12 +602,8 @@ class LiveBlock(Platform):
     def __init__(self, x, y, map_row, images):
         Platform.__init__(self, x, y, map_row, images, None)
         self.image_iterator = iter(self.images)
-        #self.image = next(self.image_iterator)
         # Be on/off default as random
         self.is_active = bool(random.getrandbits(1))
-
-#    def default_image(self):
-#        return self.image_normal
 
     def animate(self):
         if not self.is_active:
@@ -661,17 +623,15 @@ class LiveBlock(Platform):
 
 
 class LooseBlock(BaseEntity):
-    def __init__(self, x, y, map_row):
+    def __init__(self, x, y, map_row, image):
         BaseEntity.__init__(self, map_row)
         self.x_vel = 0
         self.y_vel = 0
         self.onGround = True
-        self.image = self.default_image()
+        self.image = image
         self.image.convert()
         self.rect = Rect(x, y, 32, 32)
 
-    def default_image(self):
-        return loose_platform_image
 
     def refresh_image(self):
         pass
