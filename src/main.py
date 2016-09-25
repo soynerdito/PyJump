@@ -127,11 +127,11 @@ def main():
     player_base_x = 832
 
     # Load sprites
-    player_jump = load_image(game_sprite_sheet, player_base_x, 32)
 
-    player_walk_1 = load_image(game_sprite_sheet, player_base_x + 32 * 1, 32)
-    player_walk_2 = load_image(game_sprite_sheet, player_base_x + 32 * 2, 32)
-    player_image = player_walk_2
+    # player_jump = load_image(game_sprite_sheet, player_base_x, 32)
+    # player_walk_1 = load_image(game_sprite_sheet, player_base_x + 32 * 1, 32)
+    # player_walk_2 = load_image(game_sprite_sheet, player_base_x + 32 * 2, 32)
+    # player_image = player_walk_2
 
     platform_image_alt = load_image(game_sprite_sheet, 672, 928)
     platform_image = load_image(game_sprite_sheet, 352, 928)
@@ -151,7 +151,6 @@ def main():
     platform_image_broke_1 = load_image(game_sprite_sheet, 704, 928)
     platform_image_broke_2 = load_image(game_sprite_sheet, 736, 928)
 
-
     start_live = [512, 928]
     live_platform_images = []
     for i in range(0, 4):
@@ -162,59 +161,20 @@ def main():
     bg.convert()
     bg.fill(Color("#000000"))
     entities = pygame.sprite.Group()
-    player = Player(32, (32 * 15), player_image, [player_walk_1, player_walk_2], player_jump)
+    # player = Player(32, (32 * 15), player_image, [player_walk_1, player_walk_2], player_jump)
+    player = Player(32, (32 * 15), game_sprite_sheet, player_base_x, 32)
+    ghost = Ghost(32, (32 * 6 ), game_sprite_sheet, player_base_x, 32 * 6)
     platforms = []
     loose_platforms = []
     live_platforms = []
-    x = y = 0
     entity_rows = []
-
-    # Build the level
-    for row in list(reversed(range(21))):
-        floor = get_floor(row)
-        # print(floor)
-        entity_rows.append(int(row))
-        for col in floor:
-            if col == "1":
-                if randint(0, 9) == 3:
-                    p = PlatformCrackable(x, y, (int(row)),
-                                          [platform_image, platform_image_broke_1, platform_image_broke_2])
-                else:
-                    p = Platform(x, y, (int(row)), platform_images, platform_images_alt)
-                platforms.append(p)
-                entities.add(p)
-            if col == "2":
-                p = LooseBlock(x, y, row, loose_platform_image)
-                platforms.append(p)
-                loose_platforms.append(p)
-                entities.add(p)
-            if col == "3":
-                p = FloatingBlock(x, y, row)
-                platforms.append(p)
-                loose_platforms.append(p)
-                entities.add(p)
-            if col == "4":
-                p = PlatformTrampoline(x, y, row, platform_trampoline, platform_trampoline_alt)
-                platforms.append(p)
-                entities.add(p)
-            if col == "E":
-                e = ExitBlock(x, y, row)
-                platforms.append(e)
-                entities.add(e)
-            if col == "5":
-                p = LiveBlock(x, y, row, live_platform_images)
-                platforms.append(p)
-                live_platforms.append(p)
-                entities.add(p)
-            x += 32
-        y += 32
-        x = 0
 
     my_level = get_floor(1)
     total_level_width = len(my_level) * 32
     total_level_height = 20 * 32
     camera = Camera(complex_camera, total_level_width, total_level_height)
     entities.add(player)
+    entities.add(ghost)
 
     # Create a timed event to animate a sprite
     pygame.time.set_timer(ANIMATE_BLOCK_EVENT, 60)
@@ -272,7 +232,7 @@ def main():
         windows_changed = False
         if int(top_row) != last_window.top_row:
             windows_changed = True
-            #newWindow = calc_window(camera.state.top)
+            # newWindow = calc_window(camera.state.top)
             last_window.top_row = int((camera.state.top / 32) + 20)
             last_window.bottom_row = int((camera.state.top / 32))
 
@@ -324,7 +284,10 @@ def main():
 
         # update player, draw everything else
         player.update(up, down, left, right, running, platforms)
-
+        try:
+            ghost.update(running, platforms)
+        except:
+            pass
         # update loose platforms
         [lp.update(platforms) for lp in loose_platforms]
 
@@ -342,8 +305,13 @@ def main():
                     # if e.row not in reported_row:
                     #    print("Eat row " + str(e.row) + " " + str(minRow))
                     entities.remove(e)
-                    platforms.remove(e)
+                    if isinstance(e, Ghost):
+                        # Create a New Enemy
+                        ghost = Ghost(32* 10, (minRow * 18), game_sprite_sheet, player_base_x, 32 * 6)
+                        entities.add(ghost)
+
                     try:
+                        platforms.remove(e)
                         loose_platforms.remove(e)
                     except:
                         pass
@@ -401,20 +369,23 @@ class Entity(pygame.sprite.Sprite):
         pygame.sprite.Sprite.__init__(self)
 
 
+# image_standing, images_walking, image_jump):
 class Player(Entity):
-    def __init__(self, x, y, image_standing, images_walking, image_jump):
+    def __init__(self, x, y, sprite_sheet, player_base_x, player_base_y):
         Entity.__init__(self)
+        self.alive = True
         self.flip_pos = x
         self.look_right = True
         self.walk_status = True
         self.x_vel = 0
         self.y_vel = 0
         self.onGround = False
-        self.image_standing = image_standing
-        self.images_walking = images_walking
-        self.image_jump = image_jump
-
+        self.image_jump = load_image(sprite_sheet, player_base_x, player_base_y)
+        self.images_walking = [load_image(sprite_sheet, player_base_x + 32 * 1, player_base_y),
+                               load_image(sprite_sheet, player_base_x + 32 * 2, player_base_y)]
+        self.image_standing = self.images_walking[1]
         self.image = self.image_standing
+
         self.image.convert()
         self.rect = Rect(x, y, 32, 32)
         self.last_rect = Rect(self.rect)
@@ -442,6 +413,8 @@ class Player(Entity):
         self.last_rect = Rect(self.rect)
 
     def update(self, up, down, left, right, running, platforms):
+        if not self.alive:
+            self.rect.top += -5
         if up:
             # only jump if on the ground
             if self.onGround: self.y_vel -= 10
@@ -470,6 +443,7 @@ class Player(Entity):
         # increment in x direction
         self.rect.left += self.x_vel
         # do x-axis collisions
+
         self.collide(self.x_vel, 0, platforms)
         # increment in y direction
         self.rect.top += self.y_vel
@@ -482,6 +456,14 @@ class Player(Entity):
     def collide(self, x_vel, y_vel, platforms):
         for p in platforms:
             if pygame.sprite.collide_rect(self, p):
+
+                if isinstance(p, Enemy):
+                    self.alive = False
+                if p.row <= 1:
+                    self.alive = True
+                if not self.alive:
+                    return
+
                 if isinstance(p, ExitBlock):
                     pygame.event.post(pygame.event.Event(QUIT))
                 if x_vel > 0:
@@ -511,6 +493,11 @@ class Player(Entity):
                     # p.image = platform_image_alt
                     self.rect.top = p.rect.bottom
                     self.y_vel = 0
+
+
+class Enemy:
+    def __init__(self):
+        pass
 
 
 class Window():
@@ -632,7 +619,6 @@ class LooseBlock(BaseEntity):
         self.image.convert()
         self.rect = Rect(x, y, 32, 32)
 
-
     def refresh_image(self):
         pass
 
@@ -667,6 +653,87 @@ class LooseBlock(BaseEntity):
                     self.y_vel = 0
                 if y_vel < 0:
                     # p.image = platform_image
+                    self.rect.top = p.rect.bottom
+                    self.y_vel = 0
+
+
+class Ghost(Player, Enemy):
+    def __init__(self, x, y, sprite_sheet, player_base_x, player_base_y):
+        Player.__init__(self, x, y, sprite_sheet, player_base_x, player_base_y)
+        self.x_vel = 2
+        self.row = abs(self.rect.bottom / 32)
+
+    def update_row(self):
+        self.row = abs(self.rect.bottom / 32)
+
+    def update(self, running, platforms):
+        #switch Side
+        #if self.x_vel == 0:
+        #    self.look_right = not self.look_right
+        #    self.x_vel = -2
+
+        #print (self.x_vel)
+
+        if running:
+            self.x_vel = 10
+        if self.x_vel < 0:
+            # self.x_vel = -4
+            self.look_right = False
+        if self.x_vel > 0:
+            # self.x_vel = 4
+            self.look_right = True
+
+        if not self.onGround:
+            # only accelerate with gravity if in the air
+            self.y_vel += 0.3
+            self.onGround = False
+            # max falling speed
+            if self.y_vel > 50: self.y_vel = 50
+
+        # increment in x direction
+        self.rect.left += self.x_vel
+        # do x-axis collisions
+
+        self.collide(self.x_vel, 0, platforms)
+        # increment in y direction
+        self.rect.top += self.y_vel
+        # assuming we're in the air
+        self.onGround = False
+        # do y-axis collisions
+        self.collide(0, self.y_vel, platforms)
+        self.refresh_image()
+        self.update_row()
+
+    def collide(self, x_vel, y_vel, platforms):
+        for p in platforms:
+            if pygame.sprite.collide_rect(self, p):
+                if isinstance(p, ExitBlock):
+                    pygame.event.post(pygame.event.Event(QUIT))
+                if x_vel > 0:
+                    self.rect.right = p.rect.left
+                    self.x_vel = -1 * x_vel
+                    self.look_right = not self.look_right
+                if x_vel < 0:
+                    self.rect.left = p.rect.right
+                    self.x_vel = -1 * x_vel
+                    self.look_right = not self.look_right
+                if y_vel > 0:
+                    self.rect.bottom = p.rect.top
+                    self.onGround = True
+                    try:
+                        p.step_over()
+                    except:
+                        pass
+                    try:
+                        self.y_vel = p.is_rubber()
+                    except:
+                        pass
+                if y_vel < 0:
+                    try:
+                        p.bellow_touch()
+                    except:
+                        pass
+                    # p.image = platform_image_alt
                     self.rect.top = p.rect.bottom
                     self.y_vel = 0
 
