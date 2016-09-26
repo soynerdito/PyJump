@@ -163,7 +163,7 @@ def main():
     entities = pygame.sprite.Group()
     # player = Player(32, (32 * 15), player_image, [player_walk_1, player_walk_2], player_jump)
     player = Player(32, (32 * 15), game_sprite_sheet, player_base_x, 32)
-    ghost = Ghost(32, (32 * 6 ), game_sprite_sheet, player_base_x, 32 * 6)
+    ghost = Ghost(32, (32 * 6), game_sprite_sheet, player_base_x, 32 * 6)
     platforms = []
     loose_platforms = []
     live_platforms = []
@@ -185,34 +185,14 @@ def main():
         toggle_animate = False
 
         for e in pygame.event.get():
-            if e.type == QUIT:
-                sys.exit(0)
-                # raise SystemExit("QUIT")
+            if e.type == QUIT: raise SystemExit, "QUIT"
             if e.type == KEYDOWN and e.key == K_ESCAPE:
-                # raise SystemExit("ESCAPE")
-                sys.exit(0)
-            if e.type == KEYDOWN and e.key == K_UP:
-                up = True
-            if e.type == KEYDOWN and e.key == K_DOWN:
-                down = True
-            if e.type == KEYDOWN and e.key == K_LEFT:
-                left = True
-            if e.type == KEYDOWN and e.key == K_RIGHT:
-                right = True
-            if e.type == KEYDOWN and e.key == K_SPACE:
-                running = True
-
-            if e.type == KEYUP and e.key == K_UP:
-                up = False
-            if e.type == KEYUP and e.key == K_DOWN:
-                down = False
-            if e.type == KEYUP and e.key == K_RIGHT:
-                right = False
-            if e.type == KEYUP and e.key == K_LEFT:
-                left = False
+                raise SystemExit, "ESCAPE"
             if e.type == ANIMATE_BLOCK_EVENT:
-                # Animate block
                 toggle_animate = True
+
+        pressed = pygame.key.get_pressed()
+        up, down, left, right, running = [pressed[key_code] for key_code in (K_UP, K_DOWN, K_LEFT, K_RIGHT, K_SPACE)]
 
         # draw background
         for y in range(32):
@@ -307,7 +287,7 @@ def main():
                     entities.remove(e)
                     if isinstance(e, Ghost):
                         # Create a New Enemy
-                        ghost = Ghost(32* 10, (minRow * 18), game_sprite_sheet, player_base_x, 32 * 6)
+                        ghost = Ghost(32 * 10, (minRow * 18), game_sprite_sheet, player_base_x, 32 * 6)
                         entities.add(ghost)
 
                     try:
@@ -667,12 +647,12 @@ class Ghost(Player, Enemy):
         self.row = abs(self.rect.bottom / 32)
 
     def update(self, running, platforms):
-        #switch Side
-        #if self.x_vel == 0:
+        # switch Side
+        # if self.x_vel == 0:
         #    self.look_right = not self.look_right
         #    self.x_vel = -2
 
-        #print (self.x_vel)
+        # print (self.x_vel)
 
         if running:
             self.x_vel = 10
