@@ -108,7 +108,7 @@ class GameScene(Scene):
     def __init__(self):
         Scene.__init__(self)
         # initialize scoreboard
-        self.toggle_animate = False
+        self.toggle_animate = True
         self.scoreboard = ScoreBoard()
 
         # Declare events
@@ -176,6 +176,13 @@ class GameScene(Scene):
 
         min_row = int(self.camera.state.top / 32)
         entity_rows = []
+
+        top_row = (self.camera.state.top / 32) + 20
+        # View window changed
+        windows_changed = False
+        if int(top_row) != self.last_window.top_row:
+            windows_changed = True
+
         for e in self.entities:
             draw_this = True
             try:
