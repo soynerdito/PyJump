@@ -176,9 +176,9 @@ def main():
         toggle_animate = False
 
         for e in pygame.event.get():
-            if e.type == QUIT: raise SystemExit, "QUIT"
+            if e.type == QUIT: raise SystemExit ( "QUIT" )
             if e.type == KEYDOWN and e.key == K_ESCAPE:
-                raise SystemExit, "ESCAPE"
+                raise SystemExit ( "ESCAPE" )
             if e.type == ANIMATE_BLOCK_EVENT:
                 toggle_animate = True
 
