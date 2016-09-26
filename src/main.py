@@ -9,10 +9,9 @@ except ImportError:
 import pygame
 import random
 from random import randint
-import sys
 from pygame import *
 from threading import Timer
-
+from game_lib import Scene
 from spritesheet import SpriteSheet
 
 WIN_WIDTH = 800
@@ -37,17 +36,17 @@ img_sprites = 'img/simples_pimples2.png'
 
 
 class ScoreBoard:
-    def __init__(self, screen):
-        self.screen = screen
+    def __init__(self,):
+        #self.screen = screen
         self.score = 0
         self.highest = 0
         self.font = pygame.font.Font("freesansbold.ttf", 25)
 
-    def update(self):
+    def render(self, screen ):
         text = self.font.render("Score: " + str(self.score), True, (255, 255, 255))
-        self.screen.blit(text, (0, 0))
+        screen.blit(text, (0, 0))
         text = self.font.render("Highest Score: " + str(self.highest), True, (255, 255, 255))
-        self.screen.blit(text, (0, 30))
+        screen.blit(text, (0, 30))
 
     def set_score(self, score):
         self.score = int(score)
@@ -104,7 +103,9 @@ def calc_window(camera_top):
 def load_image(game_sprite_sheet, top_x, top_y):
     return game_sprite_sheet.image_at((top_x, top_y, 32, 32), colorkey=(90, 82, 104))
 
+class GameScene(Scene):
 
+<<<<<<< HEAD
 def main():
 
     pygame.init()
@@ -186,106 +187,96 @@ def main():
         pressed = pygame.key.get_pressed()
         up, down, left, right, running = [pressed[key_code] for key_code in (K_UP, K_DOWN, K_LEFT, K_RIGHT, K_SPACE)]
 
+=======
+    def __init__(self):
+        Scene.__init__(self)
+        # initialize scoreboard
+        self.toggle_animate = False
+        self.scoreboard = ScoreBoard()
+
+        # Declare events
+        self.ANIMATE_BLOCK_EVENT = pygame.USEREVENT + 1
+
+        # Load sprite sheet
+        self.game_sprite_sheet = SpriteSheet(img_sprites)
+        self.player_base_x = 832
+
+        # Load sprites
+        self.platform_image_alt = load_image(self.game_sprite_sheet, 672, 928)
+        self.platform_image = load_image(self.game_sprite_sheet, 352, 928)
+        # create platform images
+        self.platform_images = [load_image(self.game_sprite_sheet, 352, 928),
+                           load_image(self.game_sprite_sheet, 352, 928 + 32),
+                           load_image(self.game_sprite_sheet, 352, 928 + 32 * 2),
+                           load_image(self.game_sprite_sheet, 352, 928 + 32 * 3)]
+
+        # create alternate platform images
+        self.platform_images_alt = [load_image(self.game_sprite_sheet, 672, 928),
+                               load_image(self.game_sprite_sheet, 672, 928 + 32),
+                               load_image(self.game_sprite_sheet, 672, 928 + 32 * 2),
+                               load_image(self.game_sprite_sheet, 672, 928 + 32 * 3)]
+
+        self.loose_platform_image = load_image(self.game_sprite_sheet, 448, 960)
+        self.platform_trampoline = load_image(self.game_sprite_sheet, 0, 640)
+        self.platform_trampoline_alt = load_image(self.game_sprite_sheet, 0, 672)
+        self.platform_image_broke_1 = load_image(self.game_sprite_sheet, 704, 928)
+        self.platform_image_broke_2 = load_image(self.game_sprite_sheet, 736, 928)
+
+        self.start_live = [512, 928]
+        self.live_platform_images = []
+        for i in range(0, 4):
+            self.live_platform_images.append(load_image(self.game_sprite_sheet, self.start_live[0], self.start_live[1] + (32 * i)))
+
+        self.bg = Surface((32, 32))
+        self.bg.convert()
+        self.bg.fill(Color("#000000"))
+        self.entities = pygame.sprite.Group()
+        # player = Player(32, (32 * 15), player_image, [player_walk_1, player_walk_2], player_jump)
+        self.player = Player(32, (32 * 15), self.game_sprite_sheet, self.player_base_x, 32)
+        self.ghost = Ghost(32, (32 * 6), self.game_sprite_sheet, self.player_base_x, 32 * 6)
+        self.platforms = []
+        self.loose_platforms = []
+        self.live_platforms = []
+        self.entity_rows = []
+
+        self.my_level = get_floor(1)
+        self.total_level_width = len(self.my_level) * 32
+        self.total_level_height = 20 * 32
+        self.camera = Camera(complex_camera, self.total_level_width, self.total_level_height)
+        self.entities.add(self.player)
+        self.entities.add(self.ghost)
+
+        # Create a timed event to animate a sprite
+        pygame.time.set_timer(self.ANIMATE_BLOCK_EVENT, 60)
+
+        self.last_window = Window(0, 0)
+
+    def render(self, screen):
+>>>>>>> organize
         # draw background
         for y in range(32):
             for x in range(32):
-                screen.blit(bg, (x * 32, y * 32))
+                screen.blit(self.bg, (x * 32, y * 32))
 
-        camera.update(player)
-        # print("Window " + str((camera.state.top/32)+20) + " " + str((camera.state.top/32)))
-
-        top_row = (camera.state.top / 32) + 20
-
-        # Update scoreboard
-        scoreboard.set_score((camera.state.top / 32))
-
-        # View window changed
-        reported_row = []
-        windows_changed = False
-        if int(top_row) != last_window.top_row:
-            windows_changed = True
-            last_window.top_row = int((camera.state.top / 32) + 20)
-            last_window.bottom_row = int((camera.state.top / 32))
-
-            missing_rows = [obj for obj in range(last_window.bottom_row - 1, last_window.top_row + 1) if
-                            obj not in entity_rows]
-            # Create missing rows
-            for row in missing_rows:
-                x = 0
-                entity_rows.append(int(row))
-                floor = get_floor(int(row))
-                y = ((20 - row) * 32)
-                if row not in reported_row:
-                    reported_row.append(row)
-                    # print("Creating Row |" + str(int(row)) + "|")
-                    # print( "|" + floor + "|")
-                for col in floor:
-                    if col == "1":
-                        if randint(0, 9) == 3:
-                            p = PlatformCrackable(x, y, (int(row)),
-                                                  [platform_image, platform_image_broke_1, platform_image_broke_2])
-                        else:
-                            p = Platform(x, y, (int(row)), platform_images, platform_images_alt)
-                        platforms.append(p)
-                        entities.add(p)
-                    if col == "2":
-                        p = LooseBlock(x, y, row, loose_platform_image)
-                        platforms.append(p)
-                        loose_platforms.append(p)
-                        entities.add(p)
-                    if col == "3":
-                        p = FloatingBlock(x, y, row)
-                        platforms.append(p)
-                        loose_platforms.append(p)
-                        entities.add(p)
-                    if col == "4":
-                        p = PlatformTrampoline(x, y, row, platform_trampoline, platform_trampoline_alt)
-                        platforms.append(p)
-                        entities.add(p)
-                    if col == "E":
-                        e = ExitBlock(x, y, row)
-                        platforms.append(e)
-                        entities.add(e)
-                    if col == "5":
-                        p = LiveBlock(x, y, row, live_platform_images)
-                        platforms.append(p)
-                        live_platforms.append(p)
-                        entities.add(p)
-                    x += 32
-
-        # update player, draw everything else
-        player.update(up, down, left, right, running, platforms)
-        try:
-            ghost.update(running, platforms)
-        except:
-            pass
-        # update loose platforms
-        [lp.update(platforms) for lp in loose_platforms]
-
-        # Do animation for live platform (fans)
-        if toggle_animate:
-            [lp.animate() for lp in live_platforms]
-
-        min_row = int(camera.state.top / 32)
-
+        min_row = int(self.camera.state.top / 32)
         entity_rows = []
-        for e in entities:
+        for e in self.entities:
             draw_this = True
             try:
-                if windows_changed and e.row > 0 and (int(e.row) > int(last_window.top_row) or int(e.row) < min_row):
-                    entities.remove(e)
+                if self.windows_changed and e.row > 0 and (int(e.row) > int(self.last_window.top_row) or int(e.row) < min_row):
+                    self.entities.remove(e)
                     if isinstance(e, Ghost):
                         # Create a New Enemy
-                        ghost = Ghost(32 * 10, (min_row * 18), game_sprite_sheet, player_base_x, 32 * 6)
-                        entities.add(ghost)
+                        ghost = Ghost(32 * 10, (min_row * 18), self.game_sprite_sheet, self.player_base_x, 32 * 6)
+                        self.entities.add(ghost)
 
                     try:
-                        platforms.remove(e)
-                        loose_platforms.remove(e)
+                        self.platforms.remove(e)
+                        self.loose_platforms.remove(e)
                     except:
                         pass
                     try:
-                        live_platforms.remove(e)
+                        self.live_platforms.remove(e)
                     except:
                         pass
                     draw_this = False
@@ -297,9 +288,123 @@ def main():
                         entity_rows.append(e.row)
                 except AttributeError:
                     pass
-                screen.blit(e.image, camera.apply(e))
+                screen.blit(e.image, self.camera.apply(e))
+        self.scoreboard.render(screen)
 
-        scoreboard.update()
+
+
+    def update(self):
+        self.camera.update(self.player)
+
+        # Update scoreboard
+        self.scoreboard.set_score((self.camera.state.top / 32))
+
+        top_row = (self.camera.state.top / 32) + 20
+        # View window changed
+        reported_row = []
+        windows_changed = False
+        if int(top_row) != self.last_window.top_row:
+            windows_changed = True
+            self.last_window.top_row = int((self.camera.state.top / 32) + 20)
+            self.last_window.bottom_row = int((self.camera.state.top / 32))
+
+            missing_rows = [obj for obj in range(self.last_window.bottom_row - 1, self.last_window.top_row + 1) if
+                            obj not in self.entity_rows]
+            # Create missing rows
+            for row in missing_rows:
+                x = 0
+                self.entity_rows.append(int(row))
+                floor = get_floor(int(row))
+                y = ((20 - row) * 32)
+                if row not in reported_row:
+                    reported_row.append(row)
+                    # print("Creating Row |" + str(int(row)) + "|")
+                    # print( "|" + floor + "|")
+                for col in floor:
+                    if col == "1":
+                        if randint(0, 9) == 3:
+                            p = PlatformCrackable(x, y, (int(row)),
+                                                  [self.platform_image, self.platform_image_broke_1, self.platform_image_broke_2])
+                        else:
+                            p = Platform(x, y, (int(row)), self.platform_images, self.platform_images_alt)
+                        self.platforms.append(p)
+                        self.entities.add(p)
+                    if col == "2":
+                        p = LooseBlock(x, y, row, self.loose_platform_image)
+                        self.platforms.append(p)
+                        self.loose_platforms.append(p)
+                        self.entities.add(p)
+                    if col == "3":
+                        p = FloatingBlock(x, y, row)
+                        self.platforms.append(p)
+                        self.loose_platforms.append(p)
+                        self.entities.add(p)
+                    if col == "4":
+                        p = PlatformTrampoline(x, y, row, self.platform_trampoline, self.platform_trampoline_alt)
+                        self.platforms.append(p)
+                        self.entities.add(p)
+                    if col == "E":
+                        e = ExitBlock(x, y, row)
+                        self.platforms.append(e)
+                        self.entities.add(e)
+                    if col == "5":
+                        p = LiveBlock(x, y, row, self.live_platform_images)
+                        self.platforms.append(p)
+                        self.live_platforms.append(p)
+                        self.entities.add(p)
+                    x += 32
+
+        # update player, draw everything else
+        self.player.update(self.up, self.down, self.left, self.right, self.running, self.platforms)
+        try:
+            self.ghost.update(self.running, self.platforms)
+        except:
+            pass
+        # update loose platforms
+        [lp.update(self.platforms) for lp in self.loose_platforms]
+
+        # Do animation for live platform (fans)
+        if self.toggle_animate:
+            [lp.animate() for lp in self.live_platforms]
+
+    def handle_events(self, events):
+        for e in events:
+            if e.type == self.ANIMATE_BLOCK_EVENT:
+                self.toggle_animate = True
+        # Get user input
+        pressed = pygame.key.get_pressed()
+        self.up, self.down, self.left, self.right, self.running = [pressed[key_code] for key_code in (K_UP, K_DOWN, K_LEFT, K_RIGHT, K_SPACE)]
+
+
+def main():
+
+    pygame.init()
+    screen = pygame.display.set_mode(DISPLAY, FLAGS, DEPTH)
+    pygame.display.set_caption("PyJump Use arrows to move!")
+    timer = pygame.time.Clock()
+
+    game_scene = GameScene()
+
+
+    while 1:
+        timer.tick(60)
+        toggle_animate = False
+
+        for e in pygame.event.get():
+            if e.type == QUIT: raise SystemExit( "QUIT")
+            if e.type == KEYDOWN and e.key == K_ESCAPE:
+                raise SystemExit("ESCAPE")
+
+        #handle events
+        game_scene.handle_events(pygame.event.get())
+        # Render scene
+        game_scene.render(screen)
+        # Process actions
+        game_scene.update()
+
+
+        # print("Window " + str((camera.state.top/32)+20) + " " + str((camera.state.top/32)))
+
         pygame.display.update()
 
 
