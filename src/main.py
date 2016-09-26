@@ -12,6 +12,7 @@ from random import randint
 import sys
 from pygame import *
 from threading import Timer
+from game_lib import Scene
 
 from spritesheet import SpriteSheet
 
@@ -104,54 +105,50 @@ def calc_window(camera_top):
 def load_image(game_sprite_sheet, top_x, top_y):
     return game_sprite_sheet.image_at((top_x, top_y, 32, 32), colorkey=(90, 82, 104))
 
+class GameScene(Scene):
 
-def main():
-
-    pygame.init()
-    screen = pygame.display.set_mode(DISPLAY, FLAGS, DEPTH)
-    pygame.display.set_caption("PyJump Use arrows to move!")
-    timer = pygame.time.Clock()
-
-    # initialize scoreboard
+    def __init__(self):
+        Scene.__init__(self)
+        # initialize scoreboard
     scoreboard = ScoreBoard(screen)
 
     # Declare events
     ANIMATE_BLOCK_EVENT = pygame.USEREVENT + 1
 
     # Load sprite sheet
-    game_sprite_sheet = SpriteSheet(img_sprites)
-    player_base_x = 832
+    self.game_sprite_sheet = SpriteSheet(img_sprites)
+    self.player_base_x = 832
 
     # Load sprites
-    platform_image_alt = load_image(game_sprite_sheet, 672, 928)
-    platform_image = load_image(game_sprite_sheet, 352, 928)
+    self.platform_image_alt = load_image(self.game_sprite_sheet, 672, 928)
+    self.platform_image = load_image(self.game_sprite_sheet, 352, 928)
     # create platform images
-    platform_images = [load_image(game_sprite_sheet, 352, 928),
-                       load_image(game_sprite_sheet, 352, 928 + 32),
-                       load_image(game_sprite_sheet, 352, 928 + 32 * 2),
-                       load_image(game_sprite_sheet, 352, 928 + 32 * 3)]
+    self.platform_images = [load_image(self.game_sprite_sheet, 352, 928),
+                       load_image(self.game_sprite_sheet, 352, 928 + 32),
+                       load_image(self.game_sprite_sheet, 352, 928 + 32 * 2),
+                       load_image(self.game_sprite_sheet, 352, 928 + 32 * 3)]
 
     # create alternate platform images
-    platform_images_alt = [load_image(game_sprite_sheet, 672, 928),
-                           load_image(game_sprite_sheet, 672, 928 + 32),
-                           load_image(game_sprite_sheet, 672, 928 + 32 * 2),
-                           load_image(game_sprite_sheet, 672, 928 + 32 * 3)]
+    self.platform_images_alt = [load_image(self.game_sprite_sheet, 672, 928),
+                           load_image(self.game_sprite_sheet, 672, 928 + 32),
+                           load_image(self.game_sprite_sheet, 672, 928 + 32 * 2),
+                           load_image(self.game_sprite_sheet, 672, 928 + 32 * 3)]
 
-    loose_platform_image = load_image(game_sprite_sheet, 448, 960)
-    platform_trampoline = load_image(game_sprite_sheet, 0, 640)
-    platform_trampoline_alt = load_image(game_sprite_sheet, 0, 672)
-    platform_image_broke_1 = load_image(game_sprite_sheet, 704, 928)
-    platform_image_broke_2 = load_image(game_sprite_sheet, 736, 928)
+    self.loose_platform_image = load_image(self.game_sprite_sheet, 448, 960)
+    self.platform_trampoline = load_image(self.game_sprite_sheet, 0, 640)
+    self.platform_trampoline_alt = load_image(self.game_sprite_sheet, 0, 672)
+    self.platform_image_broke_1 = load_image(self.game_sprite_sheet, 704, 928)
+    self.platform_image_broke_2 = load_image(self.game_sprite_sheet, 736, 928)
 
-    start_live = [512, 928]
-    live_platform_images = []
+    self.start_live = [512, 928]
+    self.live_platform_images = []
     for i in range(0, 4):
-        live_platform_images.append(load_image(game_sprite_sheet, start_live[0], start_live[1] + (32 * i)))
+        self.live_platform_images.append(load_image(self.game_sprite_sheet, self.start_live[0], self.start_live[1] + (32 * i)))
 
-    bg = Surface((32, 32))
-    bg.convert()
-    bg.fill(Color("#000000"))
-    entities = pygame.sprite.Group()
+    self.bg = Surface((32, 32))
+    self.bg.convert()
+    self.bg.fill(Color("#000000"))
+    self.entities = self.pygame.sprite.Group()
     # player = Player(32, (32 * 15), player_image, [player_walk_1, player_walk_2], player_jump)
     player = Player(32, (32 * 15), game_sprite_sheet, player_base_x, 32)
     ghost = Ghost(32, (32 * 6), game_sprite_sheet, player_base_x, 32 * 6)
@@ -170,7 +167,28 @@ def main():
     # Create a timed event to animate a sprite
     pygame.time.set_timer(ANIMATE_BLOCK_EVENT, 60)
 
-    last_window = Window(0, 0)
+    self.last_window = Window(0, 0)
+
+    def render(self, screen):
+        pass
+
+    def update(self):
+        pass
+
+    def handle_events(self, events):
+        pass
+
+
+def main():
+
+    pygame.init()
+    screen = pygame.display.set_mode(DISPLAY, FLAGS, DEPTH)
+    pygame.display.set_caption("PyJump Use arrows to move!")
+    timer = pygame.time.Clock()
+
+    game_scene = GameScene()
+
+
     while 1:
         timer.tick(60)
         toggle_animate = False
@@ -204,6 +222,7 @@ def main():
         windows_changed = False
         if int(top_row) != last_window.top_row:
             windows_changed = True
+
             last_window.top_row = int((camera.state.top / 32) + 20)
             last_window.bottom_row = int((camera.state.top / 32))
 
