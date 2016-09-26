@@ -25,7 +25,6 @@ DEPTH = 32
 FLAGS = 0
 CAMERA_SLACK = 30
 
-TOP_OFFSET = 0
 
 # This class handles sprite sheets
 # This was taken from www.scriptefun.com/transcript-2-using
@@ -107,13 +106,10 @@ def load_image(game_sprite_sheet, top_x, top_y):
 
 
 def main():
-    # global cameraX, cameraY
-    global TOP_OFFSET
 
-    CURRENT_TOP = 0
     pygame.init()
     screen = pygame.display.set_mode(DISPLAY, FLAGS, DEPTH)
-    pygame.display.set_caption("Use arrows to move!")
+    pygame.display.set_caption("PyJump Use arrows to move!")
     timer = pygame.time.Clock()
 
     # initialize scoreboard
@@ -127,21 +123,17 @@ def main():
     player_base_x = 832
 
     # Load sprites
-
-    # player_jump = load_image(game_sprite_sheet, player_base_x, 32)
-    # player_walk_1 = load_image(game_sprite_sheet, player_base_x + 32 * 1, 32)
-    # player_walk_2 = load_image(game_sprite_sheet, player_base_x + 32 * 2, 32)
-    # player_image = player_walk_2
-
     platform_image_alt = load_image(game_sprite_sheet, 672, 928)
     platform_image = load_image(game_sprite_sheet, 352, 928)
     # create platform images
-    platform_images = [load_image(game_sprite_sheet, 352, 928), load_image(game_sprite_sheet, 352, 928 + 32),
+    platform_images = [load_image(game_sprite_sheet, 352, 928),
+                       load_image(game_sprite_sheet, 352, 928 + 32),
                        load_image(game_sprite_sheet, 352, 928 + 32 * 2),
                        load_image(game_sprite_sheet, 352, 928 + 32 * 3)]
 
     # create alternate platform images
-    platform_images_alt = [load_image(game_sprite_sheet, 672, 928), load_image(game_sprite_sheet, 672, 928 + 32),
+    platform_images_alt = [load_image(game_sprite_sheet, 672, 928),
+                           load_image(game_sprite_sheet, 672, 928 + 32),
                            load_image(game_sprite_sheet, 672, 928 + 32 * 2),
                            load_image(game_sprite_sheet, 672, 928 + 32 * 3)]
 
@@ -156,7 +148,6 @@ def main():
     for i in range(0, 4):
         live_platform_images.append(load_image(game_sprite_sheet, start_live[0], start_live[1] + (32 * i)))
 
-    up = down = left = right = running = False
     bg = Surface((32, 32))
     bg.convert()
     bg.fill(Color("#000000"))
@@ -213,7 +204,6 @@ def main():
         windows_changed = False
         if int(top_row) != last_window.top_row:
             windows_changed = True
-            # newWindow = calc_window(camera.state.top)
             last_window.top_row = int((camera.state.top / 32) + 20)
             last_window.bottom_row = int((camera.state.top / 32))
 
@@ -276,19 +266,17 @@ def main():
         if toggle_animate:
             [lp.animate() for lp in live_platforms]
 
-        minRow = int(camera.state.top / 32)
+        min_row = int(camera.state.top / 32)
 
         entity_rows = []
         for e in entities:
             draw_this = True
             try:
-                if windows_changed and e.row > 0 and (int(e.row) > int(last_window.top_row) or int(e.row) < minRow):
-                    # if e.row not in reported_row:
-                    #    print("Eat row " + str(e.row) + " " + str(minRow))
+                if windows_changed and e.row > 0 and (int(e.row) > int(last_window.top_row) or int(e.row) < min_row):
                     entities.remove(e)
                     if isinstance(e, Ghost):
                         # Create a New Enemy
-                        ghost = Ghost(32 * 10, (minRow * 18), game_sprite_sheet, player_base_x, 32 * 6)
+                        ghost = Ghost(32 * 10, (min_row * 18), game_sprite_sheet, player_base_x, 32 * 6)
                         entities.add(ghost)
 
                     try:
