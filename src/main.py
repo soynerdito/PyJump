@@ -191,6 +191,7 @@ def main():
             if e.type == ANIMATE_BLOCK_EVENT:
                 toggle_animate = True
 
+        # Get user input
         pressed = pygame.key.get_pressed()
         up, down, left, right, running = [pressed[key_code] for key_code in (K_UP, K_DOWN, K_LEFT, K_RIGHT, K_SPACE)]
 
