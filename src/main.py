@@ -13,6 +13,7 @@ from pygame import *
 from threading import Timer
 from game_lib import Scene
 from spritesheet import SpriteSheet
+from collections import deque
 
 WIN_WIDTH = 800
 WIN_HEIGHT = 640
@@ -64,7 +65,8 @@ def _get_floor(floor_number, dept):
     else:
         random.seed(floor_number)
         base = [" ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ",
-                " ", " ", "1", "2", " ", "4", "1", " ", " ", "1", " ", " ", "5", "2", " ", " ", " ", " ", " ", " ", "1"]
+                " ", " ", "1", "1", " ", "4", "1", " ", " ", "1", " ", " ", "5", "1", " ", " ", " ", " ", " ", " ", "1"]
+                #" ", " ", "1", "2", " ", "4", "1", " ", " ", "1", " ", " ", "5", "2", " ", " ", " ", " ", " ", " ", "1"]
         floor_array = random.sample(base, len(base))
         floor = "1"
         pos = 0
@@ -150,7 +152,7 @@ class GameScene(Scene):
         self.entities = pygame.sprite.Group()
         # player = Player(32, (32 * 15), player_image, [player_walk_1, player_walk_2], player_jump)
         self.player = Player(32, (32 * 15), self.game_sprite_sheet, self.player_base_x, 32)
-        self.ghost = Ghost(32, (32 * 6), self.game_sprite_sheet, self.player_base_x, 32 * 6)
+        self.ghost = Ghost(32, (32 * 15), self.game_sprite_sheet, self.player_base_x, 32 * 6)
         self.platforms = []
         self.loose_platforms = []
         self.live_platforms = []
@@ -280,7 +282,8 @@ class GameScene(Scene):
         # update player, draw everything else
         self.player.update(self.up, self.down, self.left, self.right, self.running, self.platforms)
         try:
-            self.ghost.update(self.running, self.platforms)
+            #self.ghost.update(self.running, self.platforms)
+            self.ghost.update(self.up, self.down, self.left, self.right, self.running, self.platforms)
         except:
             pass
         # update loose platforms
@@ -653,8 +656,36 @@ class LooseBlock(BaseEntity):
                     self.rect.top = p.rect.bottom
                     self.y_vel = 0
 
+class Action():
+    def __init__(self, up, down, left, right, running, platforms):
+        self.up = up
+        self.down = down
+        self.left = left
+        self.right = right
+        self.running = running
+        self.platforms = platforms
 
 class Ghost(Player, Enemy):
+    def __init__(self, x, y, sprite_sheet, player_base_x, player_base_y):
+        Player.__init__(self, x, y, sprite_sheet, player_base_x, player_base_y)
+        self.active = False
+        self.born = pygame.time.get_ticks()
+        self.delay_start = 1500
+        self.action_queue = deque()
+
+    def get_age(self):
+        return pygame.time.get_ticks() - self.born
+
+    def update(self, up, down, left, right, running, platforms):
+        self.action_queue.append(Action(up, down, left, right, running, platforms))
+        if not self.active and self.get_age() > self.delay_start:
+            self.active = True
+        if self.active:
+            action = self.action_queue.popleft()
+            Player.update(self, action.up, action.down, action.left, action.right, action.running, action.platforms)
+
+
+class StupidEnemy(Player, Enemy):
     def __init__(self, x, y, sprite_sheet, player_base_x, player_base_y):
         Player.__init__(self, x, y, sprite_sheet, player_base_x, player_base_y)
         self.x_vel = 2
@@ -701,6 +732,14 @@ class Ghost(Player, Enemy):
         self.refresh_image()
         self.update_row()
 
+    def random_jump(self):
+
+        jump = bool(random.getrandbits(1))
+        if( jump ):
+            # Get a Random height
+            self.y_vel = random.randint(4, 20) * -1
+
+
     def collide(self, x_vel, y_vel, platforms):
         for p in platforms:
             if pygame.sprite.collide_rect(self, p):
@@ -710,10 +749,12 @@ class Ghost(Player, Enemy):
                     self.rect.right = p.rect.left
                     self.x_vel = -1 * x_vel
                     self.look_right = not self.look_right
+                    self.random_jump()
                 if x_vel < 0:
                     self.rect.left = p.rect.right
                     self.x_vel = -1 * x_vel
                     self.look_right = not self.look_right
+                    self.random_jump()
                 if y_vel > 0:
                     self.rect.bottom = p.rect.top
                     self.onGround = True
