@@ -25,7 +25,6 @@ DEPTH = 32
 FLAGS = 0
 CAMERA_SLACK = 30
 
-
 # This class handles sprite sheets
 # This was taken from www.scriptefun.com/transcript-2-using
 # sprite-sheets-and-drawing-the-background
@@ -37,13 +36,13 @@ img_sprites = 'img/simples_pimples2.png'
 
 
 class ScoreBoard:
-    def __init__(self,):
-        #self.screen = screen
+    def __init__(self, ):
+        # self.screen = screen
         self.score = 0
         self.highest = 0
         self.font = pygame.font.Font("freesansbold.ttf", 25)
 
-    def render(self, screen ):
+    def render(self, screen):
         text = self.font.render("Score: " + str(self.score), True, (255, 255, 255))
         screen.blit(text, (0, 0))
         text = self.font.render("Highest Score: " + str(self.highest), True, (255, 255, 255))
@@ -66,7 +65,7 @@ def _get_floor(floor_number, dept):
         random.seed(floor_number)
         base = [" ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ",
                 " ", " ", "1", "1", " ", "4", "1", " ", " ", "1", " ", " ", "5", "1", " ", " ", " ", " ", " ", " ", "1"]
-                #" ", " ", "1", "2", " ", "4", "1", " ", " ", "1", " ", " ", "5", "2", " ", " ", " ", " ", " ", " ", "1"]
+        # " ", " ", "1", "2", " ", "4", "1", " ", " ", "1", " ", " ", "5", "2", " ", " ", " ", " ", " ", " ", "1"]
         floor_array = random.sample(base, len(base))
         floor = "1"
         pos = 0
@@ -105,8 +104,8 @@ def calc_window(camera_top):
 def load_image(game_sprite_sheet, top_x, top_y):
     return game_sprite_sheet.image_at((top_x, top_y, 32, 32), colorkey=(90, 82, 104))
 
-class GameScene(Scene):
 
+class GameScene(Scene):
     def __init__(self):
         Scene.__init__(self)
         # initialize scoreboard
@@ -125,15 +124,15 @@ class GameScene(Scene):
         self.platform_image = load_image(self.game_sprite_sheet, 352, 928)
         # create platform images
         self.platform_images = [load_image(self.game_sprite_sheet, 352, 928),
-                           load_image(self.game_sprite_sheet, 352, 928 + 32),
-                           load_image(self.game_sprite_sheet, 352, 928 + 32 * 2),
-                           load_image(self.game_sprite_sheet, 352, 928 + 32 * 3)]
+                                load_image(self.game_sprite_sheet, 352, 928 + 32),
+                                load_image(self.game_sprite_sheet, 352, 928 + 32 * 2),
+                                load_image(self.game_sprite_sheet, 352, 928 + 32 * 3)]
 
         # create alternate platform images
         self.platform_images_alt = [load_image(self.game_sprite_sheet, 672, 928),
-                               load_image(self.game_sprite_sheet, 672, 928 + 32),
-                               load_image(self.game_sprite_sheet, 672, 928 + 32 * 2),
-                               load_image(self.game_sprite_sheet, 672, 928 + 32 * 3)]
+                                    load_image(self.game_sprite_sheet, 672, 928 + 32),
+                                    load_image(self.game_sprite_sheet, 672, 928 + 32 * 2),
+                                    load_image(self.game_sprite_sheet, 672, 928 + 32 * 3)]
 
         self.loose_platform_image = load_image(self.game_sprite_sheet, 448, 960)
         self.platform_trampoline = load_image(self.game_sprite_sheet, 0, 640)
@@ -144,7 +143,8 @@ class GameScene(Scene):
         self.start_live = [512, 928]
         self.live_platform_images = []
         for i in range(0, 4):
-            self.live_platform_images.append(load_image(self.game_sprite_sheet, self.start_live[0], self.start_live[1] + (32 * i)))
+            self.live_platform_images.append(
+                load_image(self.game_sprite_sheet, self.start_live[0], self.start_live[1] + (32 * i)))
 
         self.bg = Surface((32, 32))
         self.bg.convert()
@@ -188,16 +188,15 @@ class GameScene(Scene):
         for e in self.entities:
             draw_this = True
             try:
-                if self.windows_changed and e.row > 0 and (int(e.row) > int(self.last_window.top_row) or int(e.row) < min_row):
-                    self.entities.remove(e)
-                    if isinstance(e, Ghost):
-                        # Create a New Enemy
-                        ghost = Ghost(32 * 10, (min_row * 18), self.game_sprite_sheet, self.player_base_x, 32 * 6)
-                        self.entities.add(ghost)
+                if self.windows_changed and e.row > 0 and (
+                                int(e.row) > int(self.last_window.top_row) or int(e.row) < min_row):
+
 
                     try:
-                        self.platforms.remove(e)
-                        self.loose_platforms.remove(e)
+                        if not isinstance(e, Ghost):
+                            self.entities.remove(e)
+                            self.platforms.remove(e)
+                            self.loose_platforms.remove(e)
                     except:
                         pass
                     try:
@@ -215,8 +214,6 @@ class GameScene(Scene):
                     pass
                 screen.blit(e.image, self.camera.apply(e))
         self.scoreboard.render(screen)
-
-
 
     def update(self):
         self.camera.update(self.player)
@@ -249,7 +246,8 @@ class GameScene(Scene):
                     if col == "1":
                         if randint(0, 9) == 3:
                             p = PlatformCrackable(x, y, (int(row)),
-                                                  [self.platform_image, self.platform_image_broke_1, self.platform_image_broke_2])
+                                                  [self.platform_image, self.platform_image_broke_1,
+                                                   self.platform_image_broke_2])
                         else:
                             p = Platform(x, y, (int(row)), self.platform_images, self.platform_images_alt)
                         self.platforms.append(p)
@@ -282,10 +280,29 @@ class GameScene(Scene):
         # update player, draw everything else
         self.player.update(self.up, self.down, self.left, self.right, self.running, self.platforms)
         try:
-            #self.ghost.update(self.running, self.platforms)
+            # self.ghost.update(self.running, self.platforms)
+            #if self.ghost is not None:
+                # Check if ghost is in the window if not remove it
+            #    if not self.camera.state.contains(Rect(self.ghost.rect.x,self.ghost.rect.y, self.ghost.rect.x+32, self.ghost.rect.y -32) ):
+                    # ghost is not inside the camera, kill it!
+            #        self.kill_enemy(self.ghost)
+            #        self.ghost = None
+            #    else:
             self.ghost.update(self.up, self.down, self.left, self.right, self.running, self.platforms)
         except:
             pass
+
+        # check if collide
+        if (self.ghost is None or not self.ghost.alive) and self.player.alive:
+            self.ghost = Ghost(self.player.rect.x, self.player.rect.y, self.game_sprite_sheet, self.player_base_x,
+                               32 * 6)
+            self.entities.add(self.ghost)
+
+        if self.ghost is not None and self.ghost.active and pygame.sprite.collide_rect(self.player, self.ghost):
+            self.player.alive = False
+            self.kill_enemy(self.ghost)
+            self.ghost = None
+
         # update loose platforms
         [lp.update(self.platforms) for lp in self.loose_platforms]
 
@@ -299,11 +316,18 @@ class GameScene(Scene):
                 self.toggle_animate = True
         # Get user input
         pressed = pygame.key.get_pressed()
-        self.up, self.down, self.left, self.right, self.running = [pressed[key_code] for key_code in (K_UP, K_DOWN, K_LEFT, K_RIGHT, K_SPACE)]
+        self.up, self.down, self.left, self.right, self.running = [pressed[key_code] for key_code in
+                                                                   (K_UP, K_DOWN, K_LEFT, K_RIGHT, K_SPACE)]
+
+    def kill_enemy(self, enemy):
+        enemy.alive = False
+        enemy.reboot()
+        self.entities.remove(enemy)
+        enemy.kill()
+        # enemy = None
 
 
 def main():
-
     pygame.init()
     screen = pygame.display.set_mode(DISPLAY, FLAGS, DEPTH)
     pygame.display.set_caption("PyJump Use arrows to move!")
@@ -311,23 +335,21 @@ def main():
 
     game_scene = GameScene()
 
-
     while 1:
         timer.tick(60)
         toggle_animate = False
 
         for e in pygame.event.get():
-            if e.type == QUIT: raise SystemExit( "QUIT")
+            if e.type == QUIT: raise SystemExit("QUIT")
             if e.type == KEYDOWN and e.key == K_ESCAPE:
                 raise SystemExit("ESCAPE")
 
-        #handle events
+        # handle events
         game_scene.handle_events(pygame.event.get())
         # Render scene
         game_scene.render(screen)
         # Process actions
         game_scene.update()
-
 
         # print("Window " + str((camera.state.top/32)+20) + " " + str((camera.state.top/32)))
 
@@ -656,14 +678,15 @@ class LooseBlock(BaseEntity):
                     self.rect.top = p.rect.bottom
                     self.y_vel = 0
 
-class Action():
-    def __init__(self, up, down, left, right, running, platforms):
+
+class Action:
+    def __init__(self, up, down, left, right, running):
         self.up = up
         self.down = down
         self.left = left
         self.right = right
         self.running = running
-        self.platforms = platforms
+
 
 class Ghost(Player, Enemy):
     def __init__(self, x, y, sprite_sheet, player_base_x, player_base_y):
@@ -673,16 +696,21 @@ class Ghost(Player, Enemy):
         self.delay_start = 1500
         self.action_queue = deque()
 
+    def reboot(self):
+        self.born = pygame.time.get_ticks()
+        self.action_queue.clear()
+        self.active = False
+
     def get_age(self):
         return pygame.time.get_ticks() - self.born
 
     def update(self, up, down, left, right, running, platforms):
-        self.action_queue.append(Action(up, down, left, right, running, platforms))
+        self.action_queue.append(Action(up, down, left, right, running))
         if not self.active and self.get_age() > self.delay_start:
             self.active = True
         if self.active:
             action = self.action_queue.popleft()
-            Player.update(self, action.up, action.down, action.left, action.right, action.running, action.platforms)
+            Player.update(self, action.up, action.down, action.left, action.right, action.running, platforms)
 
 
 class StupidEnemy(Player, Enemy):
@@ -733,12 +761,9 @@ class StupidEnemy(Player, Enemy):
         self.update_row()
 
     def random_jump(self):
-
-        jump = bool(random.getrandbits(1))
-        if( jump ):
+        if bool(random.getrandbits(1)):
             # Get a Random height
             self.y_vel = random.randint(4, 20) * -1
-
 
     def collide(self, x_vel, y_vel, platforms):
         for p in platforms:
