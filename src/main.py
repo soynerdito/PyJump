@@ -41,12 +41,18 @@ class ScoreBoard:
         self.score = 0
         self.highest = 0
         self.font = pygame.font.Font("freesansbold.ttf", 25)
+        self.extra_text = ''
 
     def render(self, screen):
         text = self.font.render("Score: " + str(self.score), True, (255, 255, 255))
         screen.blit(text, (0, 0))
         text = self.font.render("Highest Score: " + str(self.highest), True, (255, 255, 255))
         screen.blit(text, (0, 30))
+        text = self.font.render(self.extra_text, True, (255, 255, 255))
+        screen.blit(text, (0, 30))
+
+    def set_extra_text(self, caption):
+        self.extra_text = caption
 
     def set_score(self, score):
         self.score = int(score)
@@ -85,13 +91,10 @@ def _get_floor(floor_number, dept):
                     if (bellow_floor[pos + 1] == " " and str(item) == "4") \
                             or (bellow_floor[pos + 1] != " " and str(item) == "2"):
                         item = "1"
-
             floor += str(item)
             pos += 1
         floor += "1"
-
     return floor
-
 
 def get_floor(floor_number):
     return _get_floor(floor_number, 0)
@@ -152,7 +155,7 @@ class GameScene(Scene):
         self.entities = pygame.sprite.Group()
         # player = Player(32, (32 * 15), player_image, [player_walk_1, player_walk_2], player_jump)
         self.player = Player(32, (32 * 15), self.game_sprite_sheet, self.player_base_x, 32)
-        self.ghost = Ghost(32, (32 * 15), self.game_sprite_sheet, self.player_base_x, 32 * 6)
+        ghost = Ghost(32, (32 * 15), self.game_sprite_sheet, self.player_base_x, 32 * 6)
         self.platforms = []
         self.loose_platforms = []
         self.live_platforms = []
@@ -163,7 +166,11 @@ class GameScene(Scene):
         self.total_level_height = 20 * 32
         self.camera = Camera(complex_camera, self.total_level_width, self.total_level_height)
         self.entities.add(self.player)
-        self.entities.add(self.ghost)
+        # self.entities.add(self.ghost)
+
+        self.enemies = pygame.sprite.Group()
+        self.enemies.add(ghost)
+        self.entities.add(ghost)
 
         # Create a timed event to animate a sprite
         pygame.time.set_timer(self.ANIMATE_BLOCK_EVENT, 60)
@@ -190,10 +197,8 @@ class GameScene(Scene):
             try:
                 if self.windows_changed and e.row > 0 and (
                                 int(e.row) > int(self.last_window.top_row) or int(e.row) < min_row):
-
-
                     try:
-                        if not isinstance(e, Ghost):
+                        if not isinstance(e, Enemy):
                             self.entities.remove(e)
                             self.platforms.remove(e)
                             self.loose_platforms.remove(e)
@@ -207,11 +212,11 @@ class GameScene(Scene):
             except AttributeError:
                 draw_this = True
             if draw_this:
-                try:
-                    if e.row not in entity_rows:
-                        entity_rows.append(e.row)
-                except AttributeError:
-                    pass
+                #try:
+                #    if e.row not in entity_rows:
+                #        entity_rows.append(e.row)
+                #except AttributeError:
+                #    pass
                 screen.blit(e.image, self.camera.apply(e))
         self.scoreboard.render(screen)
 
@@ -279,29 +284,29 @@ class GameScene(Scene):
 
         # update player, draw everything else
         self.player.update(self.up, self.down, self.left, self.right, self.running, self.platforms)
-        try:
-            # self.ghost.update(self.running, self.platforms)
-            #if self.ghost is not None:
-                # Check if ghost is in the window if not remove it
-            #    if not self.camera.state.contains(Rect(self.ghost.rect.x,self.ghost.rect.y, self.ghost.rect.x+32, self.ghost.rect.y -32) ):
-                    # ghost is not inside the camera, kill it!
-            #        self.kill_enemy(self.ghost)
-            #        self.ghost = None
-            #    else:
-            self.ghost.update(self.up, self.down, self.left, self.right, self.running, self.platforms)
-        except:
-            pass
 
-        # check if collide
-        if (self.ghost is None or not self.ghost.alive) and self.player.alive:
-            self.ghost = Ghost(self.player.rect.x, self.player.rect.y, self.game_sprite_sheet, self.player_base_x,
-                               32 * 6)
-            self.entities.add(self.ghost)
-
-        if self.ghost is not None and self.ghost.active and pygame.sprite.collide_rect(self.player, self.ghost):
-            self.player.alive = False
-            self.kill_enemy(self.ghost)
-            self.ghost = None
+        # self.ghost.update(self.running, self.platforms)
+        # if self.ghost is not None:
+        # Check if ghost is in the window if not remove it
+        #    if not self.camera.state.contains(Rect(self.ghost.rect.x,self.ghost.rect.y, self.ghost.rect.x+32, self.ghost.rect.y -32) ):
+        # ghost is not inside the camera, kill it!
+        #        self.kill_enemy(self.ghost)
+        #        self.ghost = None
+        #    else:
+        for enemy in self.enemies:
+            enemy.update(self.up, self.down, self.left, self.right, self.running, self.platforms)
+            # self.ghost.update(self.up, self.down, self.left, self.right, self.running, self.platforms)
+            # check if collide
+            # if (enemy is None or not self.ghost.alive) and self.player.alive:
+            #    self.ghost = Ghost(self.player.rect.x, self.player.rect.y, self.game_sprite_sheet, self.player_base_x,
+            #                       32 * 6)
+            #    self.entities.add(self.ghost)
+            if enemy.active and pygame.sprite.collide_rect(self.player, enemy):
+                self.player.alive = False
+                self.kill_enemy(enemy)
+                self.enemies.remove(enemy)
+                self.entities.remove(enemy)
+                # self.ghost = None
 
         # update loose platforms
         [lp.update(self.platforms) for lp in self.loose_platforms]
