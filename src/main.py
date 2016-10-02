@@ -96,6 +96,7 @@ def _get_floor(floor_number, dept):
         floor += "1"
     return floor
 
+
 def get_floor(floor_number):
     return _get_floor(floor_number, 0)
 
@@ -111,6 +112,7 @@ def load_image(game_sprite_sheet, top_x, top_y):
 class GameScene(Scene):
     def __init__(self):
         Scene.__init__(self)
+        self.up = self.down = self.left = self.right = self.running = False
         # initialize scoreboard
         self.toggle_animate = True
         self.scoreboard = ScoreBoard()
@@ -173,7 +175,7 @@ class GameScene(Scene):
         self.entities.add(ghost)
 
         # Create a timed event to animate a sprite
-        pygame.time.set_timer(self.ANIMATE_BLOCK_EVENT, 60)
+        pygame.time.set_timer(self.ANIMATE_BLOCK_EVENT, 75)
 
         self.last_window = Window(0, 0)
 
@@ -212,10 +214,10 @@ class GameScene(Scene):
             except AttributeError:
                 draw_this = True
             if draw_this:
-                #try:
+                # try:
                 #    if e.row not in entity_rows:
                 #        entity_rows.append(e.row)
-                #except AttributeError:
+                # except AttributeError:
                 #    pass
                 screen.blit(e.image, self.camera.apply(e))
         self.scoreboard.render(screen)
@@ -314,11 +316,13 @@ class GameScene(Scene):
         # Do animation for live platform (fans)
         if self.toggle_animate:
             [lp.animate() for lp in self.live_platforms]
+            self.toggle_animate = False
 
-    def handle_events(self, events):
-        for e in events:
-            if e.type == self.ANIMATE_BLOCK_EVENT:
-                self.toggle_animate = True
+    def handle_event(self, event):
+        if event.type == self.ANIMATE_BLOCK_EVENT:
+            self.toggle_animate = True
+
+    def handle_key_pressed(self):
         # Get user input
         pressed = pygame.key.get_pressed()
         self.up, self.down, self.left, self.right, self.running = [pressed[key_code] for key_code in
@@ -339,24 +343,23 @@ def main():
     timer = pygame.time.Clock()
 
     game_scene = GameScene()
-
     while 1:
         timer.tick(60)
-        toggle_animate = False
 
         for e in pygame.event.get():
-            if e.type == QUIT: raise SystemExit("QUIT")
+            if e.type == QUIT:
+                raise SystemExit("QUIT")
             if e.type == KEYDOWN and e.key == K_ESCAPE:
                 raise SystemExit("ESCAPE")
+            # handle event
+            game_scene.handle_event(e)
 
         # handle events
-        game_scene.handle_events(pygame.event.get())
+        game_scene.handle_key_pressed()
         # Render scene
         game_scene.render(screen)
         # Process actions
         game_scene.update()
-
-        # print("Window " + str((camera.state.top/32)+20) + " " + str((camera.state.top/32)))
 
         pygame.display.update()
 
